@@ -248,7 +248,7 @@
 
   <!-- Walkthrough overlay (shared pattern for buyer & supplier) -->
   <div id="walkthrough-overlay"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden">
+      class="fixed inset-0 bg-black/40 hidden">
     <div id="walkthrough-box"
         class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
       <p id="walkthrough-text" class="text-slate-800"></p>
@@ -430,32 +430,35 @@
       const box = $("walkthrough-box");
       if (!overlay || !box || !target) return;
 
-      // ensure overlay is visible
+      // Make sure overlay is visible so box has real size
       overlay.classList.remove("hidden");
 
       const rect = target.getBoundingClientRect();
       const padding = 12;
       const boxWidth = box.offsetWidth;
 
-      let top = window.scrollY + rect.bottom + padding;
-      let left = window.scrollX + rect.left;
+      // Position relative to viewport (overlay is fixed)
+      let top = rect.bottom + padding;
+      let left = rect.left;
 
-      const maxLeft = window.scrollX + window.innerWidth - boxWidth - 16;
+      const maxLeft = window.innerWidth - boxWidth - 16;
       if (left > maxLeft) left = maxLeft;
-      if (left < window.scrollX + 8) left = window.scrollX + 8;
+      if (left < 8) left = 8;
 
+      // If box would go off the bottom of the screen, put it above the target
       const bottomY = top + box.offsetHeight;
-      const viewportBottom = window.scrollY + window.innerHeight;
+      const viewportBottom = window.innerHeight;
       if (bottomY > viewportBottom - 16) {
-        top = window.scrollY + rect.top - box.offsetHeight - padding;
-        if (top < window.scrollY + 8) {
-          top = window.scrollY + 16;
+        top = rect.top - box.offsetHeight - padding;
+        if (top < 8) {
+          top = 16; // clamp near top
         }
       }
 
       box.style.top = `${top}px`;
       box.style.left = `${left}px`;
     }
+
 
     function showWalkthroughStep() {
       const overlay = $("walkthrough-overlay");
