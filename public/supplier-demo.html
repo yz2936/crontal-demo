@@ -15,6 +15,18 @@
     }
   </script>
   <style>
+    /* Walkthrough overlay styling */
+    #walkthrough-overlay {
+      z-index: 60;
+    }
+
+    .tour-highlight {
+      position: relative;
+      z-index: 61;
+      box-shadow: 0 0 0 2px #5a7baa, 0 0 0 6px rgba(90, 123, 170, 0.25);
+      border-radius: 0.75rem;
+    }
+
     body {
       background:
         radial-gradient(circle at top left, #dde8ff 0, #f4f6fc 45%, #ffffff 100%);
@@ -56,6 +68,11 @@
         <p class="uppercase tracking-wide text-[11px] text-slate-400">Role</p>
         <p class="mt-0.5">Mill / service center</p>
       </div>
+      <!-- Supplier guided tour button -->
+      <button id="supplier-tour-btn"
+              class="self-start md:self-auto inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+        <span>Guide me through this</span>
+      </button>
     </header>
 
     <main class="space-y-4">
@@ -229,6 +246,29 @@
     </main>
   </div>
 
+  <!-- Walkthrough overlay (shared pattern for buyer & supplier) -->
+  <div id="walkthrough-overlay"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden">
+    <div id="walkthrough-box"
+        class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
+      <p id="walkthrough-text" class="text-slate-800"></p>
+      <div class="mt-3 flex justify-between items-center gap-2">
+        <button id="walkthrough-skip"
+                class="text-[11px] text-slate-500 hover:text-slate-700">
+          Skip walkthrough
+        </button>
+        <div class="flex items-center gap-2">
+          <span id="walkthrough-step-indicator"
+                class="text-[11px] text-slate-400"></span>
+          <button id="walkthrough-next"
+                  class="rounded-lg bg-accent text-white text-[11px] px-3 py-1.5 hover:bg-accent/90">
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const $ = id => document.getElementById(id);
 
@@ -370,6 +410,151 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
+    }
+
+    // ---------- Generic walkthrough engine ----------
+    const walkthroughState = {
+      steps: [],
+      index: 0,
+      role: null // "supplier"
+    };
+
+    function clearHighlight() {
+      document.querySelectorAll(".tour-highlight").forEach(el => {
+        el.classList.remove("tour-highlight");
+      });
+    }
+
+    function positionWalkthroughBox(target) {
+      const overlay = $("walkthrough-overlay");
+      const box = $("walkthrough-box");
+      if (!overlay || !box || !target) return;
+
+      // ensure overlay is visible
+      overlay.classList.remove("hidden");
+
+      const rect = target.getBoundingClientRect();
+      const padding = 12;
+      const boxWidth = box.offsetWidth;
+
+      let top = window.scrollY + rect.bottom + padding;
+      let left = window.scrollX + rect.left;
+
+      const maxLeft = window.scrollX + window.innerWidth - boxWidth - 16;
+      if (left > maxLeft) left = maxLeft;
+      if (left < window.scrollX + 8) left = window.scrollX + 8;
+
+      const bottomY = top + box.offsetHeight;
+      const viewportBottom = window.scrollY + window.innerHeight;
+      if (bottomY > viewportBottom - 16) {
+        top = window.scrollY + rect.top - box.offsetHeight - padding;
+        if (top < window.scrollY + 8) {
+          top = window.scrollY + 16;
+        }
+      }
+
+      box.style.top = `${top}px`;
+      box.style.left = `${left}px`;
+    }
+
+    function showWalkthroughStep() {
+      const overlay = $("walkthrough-overlay");
+      const textEl = $("walkthrough-text");
+      const indicator = $("walkthrough-step-indicator");
+      if (!overlay || !textEl || !indicator) return;
+
+      clearHighlight();
+
+      const steps = walkthroughState.steps;
+      const i = walkthroughState.index;
+      if (!steps || i >= steps.length) {
+        overlay.classList.add("hidden");
+        return;
+      }
+
+      const step = steps[i];
+      const target = document.querySelector(step.selector);
+
+      if (!target) {
+        // if element missing (e.g. RFQ not loaded yet), skip to next
+        walkthroughState.index += 1;
+        showWalkthroughStep();
+        return;
+      }
+
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("tour-highlight");
+      textEl.textContent = step.text;
+      indicator.textContent = `Step ${i + 1} of ${steps.length}`;
+
+      setTimeout(() => positionWalkthroughBox(target), 250);
+    }
+
+    function startWalkthrough(role, steps) {
+      walkthroughState.role = role;
+      walkthroughState.steps = steps;
+      walkthroughState.index = 0;
+      showWalkthroughStep();
+    }
+
+    const wtNext = $("walkthrough-next");
+    const wtSkip = $("walkthrough-skip");
+    if (wtNext) {
+      wtNext.addEventListener("click", () => {
+        walkthroughState.index += 1;
+        showWalkthroughStep();
+      });
+    }
+    if (wtSkip) {
+      wtSkip.addEventListener("click", () => {
+        const overlay = $("walkthrough-overlay");
+        if (overlay) overlay.classList.add("hidden");
+        clearHighlight();
+      });
+    }
+
+    window.addEventListener("resize", () => {
+      const overlay = $("walkthrough-overlay");
+      if (overlay && !overlay.classList.contains("hidden") && walkthroughState.steps.length) {
+        const step = walkthroughState.steps[walkthroughState.index];
+        const target = document.querySelector(step.selector);
+        if (target) positionWalkthroughBox(target);
+      }
+    });
+
+    // ---------- Supplier walkthrough configuration ----------
+    const supplierTourSteps = [
+      {
+        selector: "#rfq-block",
+        text: "Start by reviewing the loaded RFQ: this summary shows what the buyer is requesting, along with destination, Incoterm, and payment terms."
+      },
+      {
+        selector: "#items-body",
+        text: "Scroll through the line items and understand the scope. Enter your unit prices in the right-most column for each line you want to quote."
+      },
+      {
+        selector: "#supplier-name-input",
+        text: "Tell the buyer who you are: add your supplier name and contact details so they know exactly which team submitted this quote."
+      },
+      {
+        selector: "#supplier-leadtime-input",
+        text: "Fill in your lead time, payment terms, and quote validity. These commercial terms drive how competitive your offer is beyond just price."
+      },
+      {
+        selector: "#supplier-notes-input",
+        text: "Use notes and conditions to call out any assumptions, exclusions, MOQs, or packaging and freight details the buyer should be aware of."
+      },
+      {
+        selector: "#supplier-submit-btn",
+        text: "Once everything looks right, submit your quote. The buyer will see your pricing, terms, and total value in their supplier response view."
+      }
+    ];
+
+    const supplierTourBtn = $("supplier-tour-btn");
+    if (supplierTourBtn) {
+      supplierTourBtn.addEventListener("click", () => {
+        startWalkthrough("supplier", supplierTourSteps);
+      });
     }
 
     async function initFromUrl() {
