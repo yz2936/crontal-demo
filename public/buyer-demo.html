@@ -542,13 +542,14 @@
       currentRequest.id = currentRequest.id || currentRequest.rfq_id || ("RFQ-" + Date.now());
       const rfqId = currentRequest.id;
 
-      const url = new URL(window.location.href);
-      // Point to supplier-demo.html with rfq_id
-      url.pathname = url.pathname.replace(/buyer-demo\.html.*$/, "supplier-demo.html");
-      url.search = `?rfq_id=${encodeURIComponent(rfqId)}`;
+      // 🔧 HARD-CODE supplier portal path
+      const url = new URL(window.location.origin);
+      url.pathname = "/supplier-demo.html";          // <-- adjust if your supplier file is named differently
+      url.search   = `?rfq_id=${encodeURIComponent(rfqId)}`;
 
       input.value = url.toString();
     }
+
 
     function parseDaysFromText(text) {
       if (!text) return NaN;
