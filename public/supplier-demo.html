@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Crontal · Supplier Quote Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { accent: '#5a7baa' }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background:
+        radial-gradient(circle at top left, #dde8ff 0, #f4f6fc 45%, #ffffff 100%);
+      color: #0f172a;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .rounded-2xl.border.bg-white {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+    #supplier-total-preview {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 py-6 md:py-10 space-y-6">
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
+          <span class="text-accent font-semibold text-lg">C</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
+              Crontal
+            </h1>
+            <span class="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50">
+              Supplier portal
+            </span>
+          </div>
+          <p class="text-xs md:text-sm text-slate-500 mt-1">
+            Review the buyer’s structured RFQ and enter your pricing and terms.
+          </p>
+        </div>
+      </div>
+      <div class="text-right text-xs text-slate-500">
+        <p class="uppercase tracking-wide text-[11px] text-slate-400">Role</p>
+        <p class="mt-0.5">Mill / service center</p>
+      </div>
+    </header>
+
+    <main class="space-y-4">
+      <!-- RFQ summary + line items -->
+      <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm flex flex-col">
+        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+              Loaded RFQ
+            </h2>
+            <p class="text-[11px] text-slate-500 mt-1">
+              This is the buyer’s structured request you’ve been invited to quote on.
+            </p>
+          </div>
+          <div class="text-right text-[11px] text-slate-500">
+            <p class="uppercase tracking-wide text-slate-400">RFQ ID</p>
+            <p id="rfq-id-label" class="mt-0.5 font-medium text-slate-900">–</p>
+          </div>
+        </div>
+
+        <div id="rfq-error" class="text-[11px] text-red-500 hidden mt-2">
+          Unable to load RFQ. Please confirm that you opened the link from the buyer.
+        </div>
+
+        <div id="rfq-empty" class="text-[11px] text-slate-500 mt-2">
+          Looking for RFQ details…
+        </div>
+
+        <div id="rfq-block" class="hidden space-y-3 mt-2">
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1">
+              Summary
+            </p>
+            <p id="rfq-summary" class="text-xs text-slate-800"></p>
+          </div>
+
+          <div class="grid gap-3 md:grid-cols-3">
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+                Destination
+              </p>
+              <p id="rfq-destination" class="mt-1 text-xs text-slate-800">–</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+                Incoterm
+              </p>
+              <p id="rfq-incoterm" class="mt-1 text-xs text-slate-800">–</p>
+            </div>
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+                Payment terms
+              </p>
+              <p id="rfq-payment" class="mt-1 text-xs text-slate-800">–</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1">
+              Line items
+            </p>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-x-auto max-h-72 overflow-y-auto">
+              <table class="min-w-full text-[11px] text-slate-800">
+                <thead class="bg-slate-100 text-slate-500 sticky top-0">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-normal">Line</th>
+                    <th class="px-3 py-2 text-left font-normal">Description</th>
+                    <th class="px-3 py-2 text-left font-normal">Grade</th>
+                    <th class="px-3 py-2 text-left font-normal">Size</th>
+                    <th class="px-3 py-2 text-left font-normal">Qty</th>
+                    <th class="px-3 py-2 text-left font-normal">UoM</th>
+                    <th class="px-3 py-2 text-left font-normal">Unit price</th>
+                  </tr>
+                </thead>
+                <tbody id="items-body" class="divide-y divide-slate-200"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quote meta -->
+      <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
+        <div class="grid gap-3 md:grid-cols-2">
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Supplier name
+            </label>
+            <input id="supplier-name-input" type="text"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="Example: Mill A · East Asia" />
+          </div>
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Currency
+            </label>
+            <select id="supplier-currency-input"
+                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="CNY">CNY</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-2">
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Contact email
+            </label>
+            <input id="supplier-email-input" type="email"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="sales@mill.com" />
+          </div>
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Contact phone
+            </label>
+            <input id="supplier-phone-input" type="tel"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="+1 555 123 4567" />
+          </div>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-3">
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Lead time (days)
+            </label>
+            <input id="supplier-leadtime-input" type="number"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="e.g. 30" />
+          </div>
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Payment terms
+            </label>
+            <input id="supplier-payment-input" type="text"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="e.g. Net 30" />
+          </div>
+          <div>
+            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+              Quote validity (days)
+            </label>
+            <input id="supplier-validity-input" type="number"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   placeholder="e.g. 15" />
+          </div>
+        </div>
+
+        <div>
+          <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            Notes / conditions
+          </label>
+          <textarea id="supplier-notes-input"
+                    class="mt-1 h-20 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+                    placeholder="Enter any special conditions, MOQ, packaging, freight assumptions, etc."></textarea>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 mt-2">
+          <p id="supplier-total-preview" class="text-[11px] text-slate-500">
+            No active request.
+          </p>
+          <button id="supplier-submit-btn"
+                  class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+            Submit quote to buyer (demo)
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    let currentRequest = null;
+    let supplierUnitPrices = [];
+
+    function mapBackendToSupplierRequest(data) {
+      const rfqId     = data.rfq_id || ("RFQ-" + Date.now());
+      const lineItems = Array.isArray(data.line_items) ? data.line_items : [];
+
+      const items = lineItems.map((li, idx) => {
+        const size = li.size || {};
+        const od   = size.outer_diameter || {};
+        const wt   = size.wall_thickness || {};
+        const len  = size.length || {};
+
+        const sizeParts = [];
+        if (od.value != null) sizeParts.push(`${od.value}${od.unit ? " " + od.unit : ""}`);
+        if (wt.value != null) sizeParts.push(`WT ${wt.value}${wt.unit ? " " + wt.unit : ""}`);
+        if (len.value != null) sizeParts.push(`${len.value}${len.unit ? " " + len.unit : ""}`);
+
+        return {
+          line: idx + 1,
+          description: li.product_type || li.raw_description || `Line ${idx + 1}`,
+          grade: li.material_grade || "",
+          quantity: li.quantity ?? null,
+          uom: li.unit || "",
+          sizeText: sizeParts.join(" · ")
+        };
+      });
+
+      const first = lineItems[0] || {};
+      const commercial = {
+        destination: first.delivery_location || "",
+        incoterm:    first.incoterm || "",
+        paymentTerm: first.payment_terms || ""
+      };
+
+      return { id: rfqId, items, commercial };
+    }
+
+    function renderRFQ() {
+      const idLabel  = $("rfq-id-label");
+      const emptyEl  = $("rfq-empty");
+      const errorEl  = $("rfq-error");
+      const blockEl  = $("rfq-block");
+      const summary  = $("rfq-summary");
+      const destEl   = $("rfq-destination");
+      const incEl    = $("rfq-incoterm");
+      const payEl    = $("rfq-payment");
+      const tbody    = $("items-body");
+
+      if (!currentRequest) {
+        idLabel.textContent = "–";
+        emptyEl.classList.remove("hidden");
+        errorEl.classList.add("hidden");
+        blockEl.classList.add("hidden");
+        return;
+      }
+
+      emptyEl.classList.add("hidden");
+      errorEl.classList.add("hidden");
+      blockEl.classList.remove("hidden");
+
+      idLabel.textContent = currentRequest.id;
+      const first = currentRequest.items[0] || {};
+      const c = currentRequest.commercial || {};
+
+      summary.textContent =
+        (first.quantity ? first.quantity + " " + (first.uom || "") : "Quantity not detected") +
+        " of " +
+        (first.description || "stainless products") +
+        (first.grade ? " · Grade " + first.grade : "") +
+        (c.destination ? " · Deliver to " + c.destination : "") +
+        (c.incoterm ? " · " + c.incoterm : "") +
+        (c.paymentTerm ? " · " + c.paymentTerm : "");
+
+      destEl.textContent = c.destination || "–";
+      incEl.textContent  = c.incoterm || "–";
+      payEl.textContent  = c.paymentTerm || "–";
+
+      tbody.innerHTML = "";
+      supplierUnitPrices = [];
+
+      currentRequest.items.forEach((it, idx) => {
+        supplierUnitPrices.push(NaN);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2">${it.line}</td>
+          <td class="px-3 py-2">${it.description || "-"}</td>
+          <td class="px-3 py-2">${it.grade || "-"}</td>
+          <td class="px-3 py-2">${it.sizeText || "-"}</td>
+          <td class="px-3 py-2">${it.quantity ?? "-"}</td>
+          <td class="px-3 py-2">${it.uom || "-"}</td>
+          <td class="px-3 py-2">
+            <input type="number" step="0.01"
+                   class="supplier-price-input w-24 rounded-lg border border-slate-300 px-2 py-1 text-[11px]"
+                   placeholder="0.00" data-index="${idx}" />
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateSupplierTotalPreview();
+    }
+
+    function computeSupplierTotal() {
+      if (!currentRequest) return { hasPrice: false, total: 0 };
+      let total = 0;
+      let hasPrice = false;
+      currentRequest.items.forEach((item, idx) => {
+        const price = supplierUnitPrices[idx];
+        if (!Number.isFinite(price)) return;
+        const qty = item.quantity ?? 0;
+        total += (qty || 1) * price;
+        hasPrice = true;
+      });
+      return { hasPrice, total };
+    }
+
+    function updateSupplierTotalPreview() {
+      const label = $("supplier-total-preview");
+      if (!label) return;
+      if (!currentRequest) {
+        label.textContent = "No active request.";
+        return;
+      }
+      const { hasPrice, total } = computeSupplierTotal();
+      const currency = $("supplier-currency-input")?.value || "USD";
+      if (!hasPrice) {
+        label.textContent = "Fill in unit prices to see the estimated total value.";
+        return;
+      }
+      label.textContent =
+        "Estimated total: " +
+        currency +
+        " " +
+        total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+    }
+
+    async function initFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const rfqId  = params.get("rfq_id");
+
+      const emptyEl = $("rfq-empty");
+      const errorEl = $("rfq-error");
+
+      if (!rfqId) {
+        emptyEl.textContent = "Missing RFQ ID in link. Please contact the buyer.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}`);
+        if (!res.ok) {
+          emptyEl.classList.add("hidden");
+          errorEl.classList.remove("hidden");
+          return;
+        }
+        const data = await res.json();
+        currentRequest = mapBackendToSupplierRequest(data);
+        renderRFQ();
+      } catch (err) {
+        console.error("Failed to load RFQ:", err);
+        emptyEl.classList.add("hidden");
+        errorEl.classList.remove("hidden");
+      }
+    }
+
+    document.addEventListener("input", e => {
+      if (!e.target.classList.contains("supplier-price-input")) return;
+      const idx = Number(e.target.getAttribute("data-index"));
+      const val = e.target.value;
+      const num = val === "" ? NaN : Number(val);
+      supplierUnitPrices[idx] = num;
+      updateSupplierTotalPreview();
+    });
+
+    $("supplier-submit-btn").addEventListener("click", async () => {
+      if (!currentRequest) {
+        alert("No active RFQ loaded. Cannot submit quote.");
+        return;
+      }
+      const { hasPrice, total } = computeSupplierTotal();
+      if (!hasPrice) {
+        alert("Please enter at least one unit price before submitting your quote.");
+        return;
+      }
+
+      const name     = $("supplier-name-input")?.value.trim() || "Unnamed supplier";
+      const currency = $("supplier-currency-input")?.value || "USD";
+      const leadTime = $("supplier-leadtime-input")?.value.trim();
+      const payment  = $("supplier-payment-input")?.value.trim() || currentRequest.commercial.paymentTerm || "";
+      const validity = $("supplier-validity-input")?.value.trim();
+      const notes    = $("supplier-notes-input")?.value.trim();
+      const email    = $("supplier-email-input")?.value.trim();
+      const phone    = $("supplier-phone-input")?.value.trim();
+
+      const items = currentRequest.items.map((item, idx) => {
+        const price = supplierUnitPrices[idx];
+        const qty   = item.quantity ?? 0;
+        const lineTotal =
+          Number.isFinite(price) && qty != null ? (qty || 1) * price : NaN;
+        return {
+          line: item.line,
+          unitPrice: Number.isFinite(price) ? price : null,
+          quantity: item.quantity,
+          lineTotal: isNaN(lineTotal) ? null : lineTotal
+        };
+      });
+
+      const quote = {
+        supplierName: name,
+        currency,
+        total,
+        items,
+        leadTime,
+        payment,
+        validity,
+        notes,
+        email,
+        phone
+      };
+
+      const rfqId = currentRequest.id;
+      try {
+        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}/quotes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(quote)
+        });
+        if (!res.ok) {
+          console.error("Submit quote error:", await res.text());
+          alert("Failed to submit quote to buyer (server error).");
+          return;
+        }
+        alert("Quote submitted to buyer. Thank you.");
+      } catch (err) {
+        console.error("Submit quote error:", err);
+        alert("Network error while submitting quote.");
+      }
+    });
+
+    window.addEventListener("load", initFromUrl);
+  </script>
+</body>
+</html>

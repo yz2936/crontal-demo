@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Crontal · Buyer RFQ Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { accent: '#5a7baa' }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      background:
+        radial-gradient(circle at top left, #dde8ff 0, #f4f6fc 45%, #ffffff 100%);
+      color: #0f172a;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .rounded-2xl.border.bg-white {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
+    }
+    .rounded-2xl.border.bg-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      border-color: #c7d2fe;
+      background-color: #fdfdff;
+    }
+    #chat-window {
+      background-color: #f9fafb !important;
+      border-color: #e5e7eb !important;
+    }
+    #chat-window .bg-accent\/10 {
+      background-color: rgba(90, 123, 170, 0.15) !important;
+    }
+    #chat-window .bg-white.border.border-slate-200 {
+      background-color: #ffffff !important;
+      border-color: #e5e7eb !important;
+    }
+    #rfp-output {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4ff 40%, #ffffff 100%) !important;
+      border-color: #c7d2fe !important;
+    }
+    .loading-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 4px;
+    }
+    .loading-dots .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background-color: #9ca3af;
+      animation: dotBounce 1s infinite ease-in-out;
+    }
+    .loading-dots .dot:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots .dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+      40% { transform: translateY(-2px); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8 md:py-10">
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
+          <span class="text-accent font-semibold text-lg">C</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">Crontal</h1>
+            <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white">
+              Buyer RFQ demo
+            </span>
+          </div>
+          <p class="text-xs md:text-sm text-slate-500 mt-1">
+            Chat with Crontal to turn your RFQ into a structured table and supplier quotes.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main class="mt-8 grid gap-6 md:grid-cols-2">
+      <!-- Left: chat + share -->
+      <section class="space-y-4">
+        <!-- File upload -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col text-xs">
+          <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-200">
+            <div>
+              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+                Upload design / spec files
+              </h2>
+              <p class="mt-1 text-xs text-slate-500">
+                Upload engineering PDFs and Excel tech specs to auto-generate line items.
+              </p>
+            </div>
+          </div>
+          <div class="mt-3 space-y-2">
+            <div>
+              <label class="text-[11px] uppercase tracking-wide text-slate-500 mb-1 block">
+                Files
+              </label>
+              <input id="file-upload-input" type="file" multiple
+                     class="text-xs text-slate-800"
+                     accept=".pdf,.xls,.xlsx,.csv,.txt" />
+              <p class="text-[11px] text-slate-500 mt-1">
+                Supported now: engineering PDFs (.pdf) and tech spec spreadsheets (.xls, .xlsx). Max 5 files per run.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <button id="file-upload-btn"
+                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Parse files into line items
+              </button>
+              <p id="file-upload-status" class="text-[11px] text-slate-500"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+            <div>
+              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+                Buyer · RFQ conversation
+              </h2>
+              <p class="mt-1 text-xs text-slate-500">
+                Chat with Crontal. It will parse your description into the table on the right and help you refine it.
+              </p>
+            </div>
+          </div>
+          <div class="mt-3 text-xs flex flex-col gap-2">
+            <label class="text-[11px] uppercase tracking-wide text-slate-500">
+              Conversation
+            </label>
+            <div id="chat-window"
+                 class="h-72 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 space-y-2 overflow-y-auto"></div>
+            <div class="mt-2 flex items-center gap-2">
+              <input id="chat-input" type="text"
+                     class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent"
+                     placeholder="Describe what you need, or reply to Crontal..." />
+              <button id="chat-send-btn"
+                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Share link + award email -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-[11px] uppercase tracking-wide text-slate-500">Share with suppliers</p>
+              <p class="text-slate-700" id="share-link-label">
+                Start a conversation to get a structured request and link you can send to suppliers.
+              </p>
+            </div>
+          </div>
+
+          <div id="share-link-block" class="mt-2 hidden">
+            <label class="text-[11px] uppercase tracking-wide text-slate-500">
+              Request link
+            </label>
+            <div class="mt-1 flex items-center gap-2">
+              <input id="share-link-input" type="text" readonly
+                     class="flex-1 rounded-xl px-3 py-1.5 text-[11px] text-slate-700 font-mono" />
+              <button id="copy-link-btn"
+                      class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+                Copy
+              </button>
+            </div>
+            <p class="mt-1 text-[11px] text-slate-500">
+              Your supplier will open this link and see the structured request in their portal.
+            </p>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-200">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div>
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">
+                  Award email to selected supplier
+                </p>
+                <p class="text-[11px] text-slate-500">
+                  This email will announce the award and reference the attached PDF document.
+                </p>
+              </div>
+              <button id="generate-rfp-btn"
+                      class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition">
+                Generate award email
+              </button>
+            </div>
+            <textarea id="rfp-output"
+                      class="mt-2 h-48 md:h-56 w-full rounded-xl px-3 py-2 text-xs md:text-[13px] leading-relaxed bg-slate-950/40 border border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
+                      placeholder="Award email will appear here after you click “Generate award email”."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: structured request + supplier responses -->
+      <section class="space-y-4">
+        <!-- Structured request -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Structured product request
+              </h3>
+              <p class="mt-1 text-xs text-slate-500">
+                Parsed from your conversation (via backend). You can still edit fields below.
+              </p>
+            </div>
+            <div class="text-right text-xs">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500">Request ID</p>
+              <p id="request-id-label" class="mt-0.5 text-slate-700 font-medium">None yet</p>
+            </div>
+          </div>
+
+          <div id="buyer-request-empty" class="text-[11px] text-slate-500">
+            No conversation yet. Start chatting on the left to generate a structured request.
+          </div>
+
+          <div id="buyer-request-block" class="hidden space-y-3">
+            <div>
+              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+                Line items (editable)
+              </p>
+              <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50">
+                <table class="min-w-full text-[11px]">
+                  <thead class="bg-slate-100 text-slate-500">
+                    <tr>
+                      <th class="px-3 py-2 text-left font-normal">Line</th>
+                      <th class="px-3 py-2 text-left font-normal">Description</th>
+                      <th class="px-3 py-2 text-left font-normal">Grade</th>
+                      <th class="px-3 py-2 text-left font-normal">Qty</th>
+                      <th class="px-3 py-2 text-left font-normal">UoM</th>
+                      <th class="px-3 py-2 text-left font-normal">Size</th>
+                    </tr>
+                  </thead>
+                  <tbody id="buyer-items-body" class="divide-y divide-slate-200 text-slate-800"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-3">
+              <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Destination</p>
+                <p id="buyer-destination" class="mt-1 text-slate-800">–</p>
+              </div>
+              <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Incoterm</p>
+                <p id="buyer-incoterm" class="mt-1 text-slate-800">–</p>
+              </div>
+              <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Payment terms</p>
+                <p id="buyer-payment" class="mt-1 text-slate-800">–</p>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+                Other requirements (optional)
+              </p>
+              <textarea id="buyer-other-req"
+                        class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+                        placeholder="Documentation, standards, QA/inspection, packaging, special notes..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supplier responses -->
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900">
+              Supplier responses
+            </h3>
+            <p class="mt-1 text-xs text-slate-500">
+              Ranked based on your selected priority.
+            </p>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <div class="flex items-center gap-2 text-xs">
+              <div class="text-right">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Count</p>
+                <p id="quotes-count" class="mt-0.5 text-slate-700 font-medium">0</p>
+              </div>
+              <button id="refresh-quotes-btn"
+                      class="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:border-accent/60 hover:text-accent transition">
+                Refresh
+              </button>
+            </div>
+            <div class="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] gap-1 mt-1">
+              <span class="text-slate-500 mr-1">Rank by:</span>
+              <button id="priority-pricing"
+                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 priority-active">
+                Pricing
+              </button>
+              <button id="priority-delivery"
+                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                Delivery
+              </button>
+              <button id="priority-payment"
+                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                Payment terms
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="quotes-empty" class="text-[11px] text-slate-500">
+          No supplier quotes yet. Share the link above so suppliers can submit a quote.
+        </div>
+
+        <div id="quotes-list" class="hidden space-y-2"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- PDF PREVIEW MODAL (moved above script so elements exist when JS runs) -->
+  <div id="pdf-modal"
+       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
+    <div class="max-w-2xl w-[90%] bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-400/40 p-4 md:p-5 flex flex-col max-h-[80vh]">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900">RFP PDF preview</h2>
+          <p class="text-[11px] text-slate-500">
+            This is the content that will be exported to PDF with signature lines.
+          </p>
+        </div>
+        <button id="pdf-modal-close"
+                class="text-[11px] text-slate-500 hover:text-slate-900 px-2 py-1 rounded-lg border border-transparent hover:border-slate-300">
+          Close
+        </button>
+      </div>
+      <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-800">
+        <pre id="pdf-preview-text"
+             class="whitespace-pre-wrap font-mono text-[11px]"></pre>
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-2">
+        <p class="text-[11px] text-slate-500">
+          Click “Download PDF” to save a copy with signature areas.
+        </p>
+        <button id="pdf-download-btn"
+                class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+          Download PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PARSE_URL   = "/api/buyer/parse-request";
+    const CLARIFY_URL = "/api/buyer/clarify";
+    const UPLOAD_SPECS_URL = "/api/buyer/upload-specs";
+
+    let currentRequest     = null;
+    let supplierQuotes     = [];
+    let supplierUnitPrices = [];
+    let clarifyMessages    = [];
+    let lastRfpDraft       = "";
+    let lastRfpQuote       = null;
+    let isThinking         = false;
+    let supplierPriority   = "pricing"; // "pricing" | "delivery" | "payment"
+
+    const { jsPDF } = window.jspdf || {};
+    const $ = id => document.getElementById(id);
+
+    function mapBackendToCurrentRequest(data, rawText) {
+      const rfqId     = data.rfq_id || ("RFQ-" + Date.now());
+      const lineItems = Array.isArray(data.line_items) ? data.line_items : [];
+
+      const items = lineItems.map((li, idx) => {
+        const size = li.size || {};
+        const od   = size.outer_diameter || {};
+        const wt   = size.wall_thickness || {};
+        const len  = size.length || {};
+
+        const sizeParts = [];
+        if (od.value != null) sizeParts.push(`${od.value}${od.unit ? " " + od.unit : ""}`);
+        if (wt.value != null) sizeParts.push(`WT ${wt.value}${wt.unit ? " " + wt.unit : ""}`);
+        if (len.value != null) sizeParts.push(`${len.value}${len.unit ? " " + len.unit : ""}`);
+
+        return {
+          line: idx + 1,
+          description: li.product_type || li.raw_description || `Line ${idx + 1}`,
+          grade: li.material_grade || "",
+          quantity: li.quantity ?? null,
+          uom: li.unit || "",
+          sizeText: sizeParts.join(" · ")
+        };
+      });
+
+      let otherReq = "";
+      lineItems.forEach(li => {
+        if (Array.isArray(li.other_requirements) && li.other_requirements.length) {
+          otherReq += (otherReq ? "; " : "") + li.other_requirements.join("; ");
+        }
+      });
+
+      const first = lineItems[0] || {};
+      const commercial = {
+        destination: first.delivery_location || "",
+        incoterm:    first.incoterm || "",
+        paymentTerm: first.payment_terms || "",
+        otherRequirements: otherReq
+      };
+
+      return {
+        id: rfqId,
+        raw: rawText,
+        items,
+        commercial
+      };
+    }
+
+    function renderChat() {
+      const win = $("chat-window");
+      let html = clarifyMessages.map(m => {
+        const isUser = m.role === "user";
+        return `
+          <div class="flex ${isUser ? "justify-end" : "justify-start"}">
+            <div class="max-w-[85%] rounded-xl px-3 py-2 text-[11px] break-words ${
+              isUser
+                ? "bg-accent/10 text-slate-900 border border-accent/40"
+                : "bg-white border border-slate-200 text-slate-800"
+            }">
+              ${m.content.replace(/\n/g,"<br/>")}
+            </div>
+          </div>`;
+      }).join("");
+
+      if (isThinking) {
+        html += `
+          <div class="flex justify-start">
+            <div class="mt-1 inline-flex items-center gap-1 max-w-[85%] rounded-xl px-3 py-2 text-[11px] bg-white border border-slate-200 text-slate-500">
+              <span>Crontal is thinking</span>
+              <span class="loading-dots">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              </span>
+            </div>
+          </div>`;
+      }
+
+      win.innerHTML = html;
+      win.scrollTop = win.scrollHeight;
+    }
+
+    function renderBuyerRequest() {
+      const empty   = $("buyer-request-empty");
+      const block   = $("buyer-request-block");
+      const idLabel = $("request-id-label");
+
+      if (!currentRequest) {
+        empty.classList.remove("hidden");
+        block.classList.add("hidden");
+        idLabel.textContent = "None yet";
+        return;
+      }
+
+      empty.classList.add("hidden");
+      block.classList.remove("hidden");
+      idLabel.textContent = currentRequest.id;
+
+      const tbody = $("buyer-items-body");
+      tbody.innerHTML = "";
+      currentRequest.items.forEach((item, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2">${item.line}</td>
+          <td class="px-3 py-2">
+            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
+                   data-index="${idx}" data-field="description"
+                   value="${item.description || ""}" />
+          </td>
+          <td class="px-3 py-2">
+            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
+                   data-index="${idx}" data-field="grade"
+                   value="${item.grade || ""}" />
+          </td>
+          <td class="px-3 py-2">
+            <input class="buyer-item-input w-16 rounded border border-slate-300 px-2 py-1 text-right"
+                   data-index="${idx}" data-field="quantity"
+                   value="${item.quantity ?? ""}" />
+          </td>
+          <td class="px-3 py-2">
+            <input class="buyer-item-input w-16 rounded border border-slate-300 px-2 py-1"
+                   data-index="${idx}" data-field="uom"
+                   value="${item.uom || ""}" />
+          </td>
+          <td class="px-3 py-2">
+            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
+                   data-index="${idx}" data-field="sizeText"
+                   value="${item.sizeText || ""}" />
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      $("buyer-destination").textContent =
+        currentRequest.commercial.destination || "–";
+      $("buyer-incoterm").textContent =
+        currentRequest.commercial.incoterm || "–";
+      $("buyer-payment").textContent =
+        currentRequest.commercial.paymentTerm || "–";
+      const otherEl = $("buyer-other-req");
+      if (otherEl) otherEl.value = currentRequest.commercial.otherRequirements || "";
+
+      renderShareLink();
+      loadQuotesFromBackend();
+    }
+
+    function renderShareLink() {
+      const block  = $("share-link-block");
+      const label  = $("share-link-label");
+      const input  = $("share-link-input");
+      if (!block || !label || !input) return;
+
+      if (!currentRequest) {
+        block.classList.add("hidden");
+        label.textContent =
+          "Start a conversation to get a structured request and link you can send to suppliers.";
+        input.value = "";
+        return;
+      }
+
+      block.classList.remove("hidden");
+      label.textContent =
+        "Share this link with suppliers so they can view and submit quotes against this request.";
+
+      currentRequest.id = currentRequest.id || currentRequest.rfq_id || ("RFQ-" + Date.now());
+      const rfqId = currentRequest.id;
+
+      const url = new URL(window.location.href);
+      // Point to supplier-demo.html with rfq_id
+      url.pathname = url.pathname.replace(/buyer-demo\.html.*$/, "supplier-demo.html");
+      url.search = `?rfq_id=${encodeURIComponent(rfqId)}`;
+
+      input.value = url.toString();
+    }
+
+    function parseDaysFromText(text) {
+      if (!text) return NaN;
+      const m1 = text.match(/(\d+)\s*day/i);
+      if (m1) return Number(m1[1]);
+      const m2 = text.match(/net\s*(\d+)/i);
+      if (m2) return Number(m2[1]);
+      return NaN;
+    }
+
+    function getBestSupplierIndex() {
+      if (!supplierQuotes.length) return -1;
+
+      if (supplierPriority === "pricing") {
+        let bestIdx = -1;
+        let bestTotal = Infinity;
+        supplierQuotes.forEach((q, idx) => {
+          if (typeof q.total === "number" && !isNaN(q.total) && q.total < bestTotal) {
+            bestTotal = q.total;
+            bestIdx   = idx;
+          }
+        });
+        return bestIdx;
+      }
+
+      if (supplierPriority === "delivery") {
+        let bestIdx = -1;
+        let bestLead = Infinity;
+        supplierQuotes.forEach((q, idx) => {
+          const d = Number(q.leadTime);
+          const lead = isNaN(d) ? Infinity : d;
+          if (lead < bestLead) {
+            bestLead = lead;
+            bestIdx  = idx;
+          }
+        });
+        if (bestIdx !== -1 && bestLead !== Infinity) return bestIdx;
+        supplierPriority = "pricing";
+        return getBestSupplierIndex();
+      }
+
+      if (supplierPriority === "payment") {
+        let bestIdx = -1;
+        let bestDays = -Infinity;
+        supplierQuotes.forEach((q, idx) => {
+          const days = parseDaysFromText(q.payment);
+          if (!isNaN(days) && days > bestDays) {
+            bestDays = days;
+            bestIdx  = idx;
+          }
+        });
+        if (bestIdx !== -1 && bestDays !== -Infinity) return bestIdx;
+        supplierPriority = "pricing";
+        return getBestSupplierIndex();
+      }
+
+      return -1;
+    }
+
+    function renderQuotes() {
+      const countEl = $("quotes-count");
+      const emptyEl = $("quotes-empty");
+      const listEl  = $("quotes-list");
+      if (!countEl || !emptyEl || !listEl) return;
+
+      countEl.textContent = supplierQuotes.length.toString();
+      if (!supplierQuotes.length) {
+        emptyEl.classList.remove("hidden");
+        listEl.classList.add("hidden");
+        listEl.innerHTML = "";
+        return;
+      }
+
+      emptyEl.classList.add("hidden");
+      listEl.classList.remove("hidden");
+      listEl.innerHTML = "";
+
+      const bestIdx = getBestSupplierIndex();
+      const priorityLabel =
+        supplierPriority === "pricing"
+          ? "pricing"
+          : supplierPriority === "delivery"
+          ? "delivery timeline"
+          : "payment terms";
+
+      supplierQuotes.forEach((q, idx) => {
+        const isBest = idx === bestIdx;
+        const card   = document.createElement("div");
+        card.className =
+          "rounded-xl px-3 py-2 border text-xs flex flex-col gap-2 " +
+          (isBest
+            ? "border-accent/70 bg-accent/10"
+            : "border-slate-200 bg-slate-50");
+
+        const totalText =
+          typeof q.total === "number" && !isNaN(q.total)
+            ? `${q.currency || "USD"} ${q.total.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}`
+            : "N/A";
+
+        const lineCount = q.items?.length || 1;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-medium text-slate-900">
+                ${q.supplierName || "Unnamed supplier"}
+              </p>
+              <p class="mt-0.5 text-[11px] text-slate-600">
+                Total: ${totalText}
+              </p>
+              <p class="mt-0.5 text-[11px] text-slate-500">
+                Lead time: ${q.leadTime || "–"} days · Payment: ${q.payment || "–"} · Validity: ${q.validity || "–"} days
+              </p>
+              <p class="mt-0.5 text-[11px] text-slate-500 line-clamp-2">
+                ${q.notes || "No special conditions."}
+              </p>
+            </div>
+            <div class="text-right text-[11px]">
+              ${
+                isBest
+                  ? `<span class="inline-flex items-center rounded-full bg-accent/10 border border-accent px-2 py-0.5 text-accent font-medium mb-1">Best offer (${priorityLabel})</span>`
+                  : ""
+              }
+              <p class="text-slate-500">
+                Lines: ${lineCount}
+              </p>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    async function loadQuotesFromBackend() {
+      if (!currentRequest) return;
+      const rfqId = currentRequest.id || currentRequest.rfq_id;
+      if (!rfqId) return;
+
+      try {
+        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}/quotes`);
+        if (!res.ok) {
+          console.error("Failed to load quotes:", await res.text());
+          return;
+        }
+        const data = await res.json();
+        supplierQuotes = data.quotes || [];
+        renderQuotes();
+      } catch (err) {
+        console.error("Error loading quotes:", err);
+      }
+    }
+
+    async function parseInitial(text) {
+      const res = await fetch(PARSE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, project_name: null })
+      });
+      if (!res.ok) {
+        console.error("Parse error:", res.status, await res.text());
+        return false;
+      }
+      const data = await res.json();
+      currentRequest = mapBackendToCurrentRequest(data, text);
+      renderBuyerRequest();
+      return true;
+    }
+
+    async function reparseWithAdditionalText(extraText) {
+      if (!currentRequest) return;
+      const combinedText =
+        (currentRequest.raw || "") +
+        "\n\nAdditional clarification from buyer:\n" +
+        extraText;
+      const res = await fetch(PARSE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: combinedText, project_name: null })
+      });
+      if (!res.ok) {
+        console.error("Re-parse error:", res.status, await res.text());
+        return;
+      }
+      const data = await res.json();
+      currentRequest = mapBackendToCurrentRequest(data, combinedText);
+      renderBuyerRequest();
+    }
+
+    async function callClarifyAPI(userMessage) {
+      if (!currentRequest) return;
+      const body = { rfq: currentRequest, history: clarifyMessages, user_message: userMessage || "" };
+      const res = await fetch(CLARIFY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        console.error("Clarifier error:", res.status, await res.text());
+        return;
+      }
+      const data = await res.json();
+      if (data.assistant_message) {
+        clarifyMessages.push({ role: "assistant", content: data.assistant_message });
+        renderChat();
+      }
+    }
+
+    async function uploadSpecsAndParse() {
+      const fileInput = $("file-upload-input");
+      if (!fileInput || !fileInput.files || !fileInput.files.length) {
+        setFileUploadStatus("Please select at least one file first.", true);
+        return;
+      }
+
+      const formData = new FormData();
+      Array.from(fileInput.files).forEach(file => formData.append("files", file));
+
+      const statusEl = $("file-upload-status");
+      const btn = $("file-upload-btn");
+      btn.disabled = true;
+      isThinking = true;
+      renderChat();
+      setFileUploadStatus("Uploading and parsing files...");
+
+      try {
+        const res = await fetch(UPLOAD_SPECS_URL, { method: "POST", body: formData });
+        if (!res.ok) {
+          let message = "Parsing failed.";
+          try {
+            const errJson = await res.json();
+            if (errJson && errJson.error) message = errJson.error;
+          } catch {
+            const txt = await res.text().catch(() => "");
+            console.error("upload-specs error (non-JSON):", txt);
+          }
+          console.error("upload-specs error:", message);
+          setFileUploadStatus(message, true);
+          clarifyMessages.push({
+            role: "assistant",
+            content: "I tried to parse the uploaded files but ran into a problem: " + message
+          });
+          renderChat();
+          return;
+        }
+
+        const data = await res.json();
+        const rawText = data.original_text || "";
+        currentRequest = mapBackendToCurrentRequest(data, rawText);
+        renderBuyerRequest();
+        setFileUploadStatus(
+          `Parsed ${currentRequest.items?.length || 0} line item(s) from files.`
+        );
+        clarifyMessages.push({
+          role: "assistant",
+          content:
+            `I've parsed your uploaded files into ${currentRequest.items?.length || 0} structured line item(s). ` +
+            `You can refine specs here or tell me about destination, delivery dates, and payment terms.`
+        });
+        renderChat();
+      } catch (err) {
+        console.error("upload-specs error:", err);
+        setFileUploadStatus("Parsing failed. Network or server error.", true);
+      } finally {
+        btn.disabled = false;
+        isThinking = false;
+        renderChat();
+      }
+    }
+
+    function setFileUploadStatus(msg, isError = false) {
+      const statusEl = $("file-upload-status");
+      if (!statusEl) return;
+      statusEl.textContent = msg || "";
+      statusEl.className =
+        "text-[11px] " + (isError ? "text-red-500" : "text-slate-500");
+    }
+
+    // Chat seeding
+    clarifyMessages.push({
+      role: "assistant",
+      content: "Hi! I’m Crontal’s RFQ assistant. Tell me what you’d like to buy (sizes, grades, quantities, delivery location, payment terms), and I’ll turn it into a structured table on the right that you can edit."
+    });
+    renderChat();
+
+    $("chat-send-btn").addEventListener("click", async () => {
+      const input = $("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      clarifyMessages.push({ role: "user", content: text });
+      isThinking = true;
+      $("chat-send-btn").disabled = true;
+      $("chat-input").disabled = true;
+      renderChat();
+
+      try {
+        if (!currentRequest) {
+          const ok = await parseInitial(text);
+          if (ok) await callClarifyAPI(text);
+        } else {
+          await reparseWithAdditionalText(text);
+          await callClarifyAPI(text);
+        }
+      } finally {
+        isThinking = false;
+        $("chat-send-btn").disabled = false;
+        $("chat-input").disabled = false;
+        renderChat();
+      }
+    });
+
+    $("chat-input").addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        $("chat-send-btn").click();
+      }
+    });
+
+    $("file-upload-btn").addEventListener("click", e => {
+      e.preventDefault();
+      uploadSpecsAndParse();
+    });
+
+    $("buyer-items-body").addEventListener("input", e => {
+      if (!e.target.classList.contains("buyer-item-input")) return;
+      const idx   = parseInt(e.target.dataset.index, 10);
+      const field = e.target.dataset.field;
+      if (!currentRequest || !currentRequest.items[idx]) return;
+      let value = e.target.value;
+      if (field === "quantity" && value !== "") {
+        const n = Number(value);
+        currentRequest.items[idx][field] = isNaN(n) ? null : n;
+      } else {
+        currentRequest.items[idx][field] = value;
+      }
+    });
+
+    $("buyer-other-req").addEventListener("input", e => {
+      if (!currentRequest) return;
+      currentRequest.commercial.otherRequirements = e.target.value;
+    });
+
+    $("copy-link-btn").addEventListener("click", () => {
+      const input = $("share-link-input");
+      if (!input.value) return;
+      input.select();
+      try { document.execCommand("copy"); alert("Link copied to clipboard."); }
+      catch { alert("Unable to copy automatically. Please copy manually."); }
+    });
+
+    const refreshBtn = document.getElementById("refresh-quotes-btn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        loadQuotesFromBackend();
+      });
+    }
+
+    // PDF download handler – now safe because modal exists before script
+    const pdfDownloadBtn = $("pdf-download-btn");
+    if (pdfDownloadBtn) {
+      pdfDownloadBtn.addEventListener("click", () => {
+        const jspdfLib = window.jspdf;
+        if (!jspdfLib || !jspdfLib.jsPDF) {
+          console.error("jsPDF library is not loaded.");
+          alert("PDF export is not available (jsPDF not loaded).");
+          return;
+        }
+
+        if (!currentRequest || !lastRfpQuote) {
+          alert("Please generate the award email first so we know which supplier is selected.");
+          return;
+        }
+
+        const doc = new jspdfLib.jsPDF({ unit: "pt", format: "a4" });
+
+        const left = 40;
+        const maxW = 515;
+        let y = 40;
+
+        const rfqId    = currentRequest.id || currentRequest.rfq_id || "RFQ";
+        const supplier = lastRfpQuote;
+        const c        = currentRequest.commercial || {};
+        const items    = currentRequest.items || [];
+        const quoteItems = supplier.items || [];
+        const currency = supplier.currency || "USD";
+
+        // ---------- HEADER ----------
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Request for Proposal (RFP)", left, y);
+        y += 20;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text(`RFQ ID: ${rfqId}`, left, y); y += 14;
+        doc.text(`Project: ${currentRequest.project_name || "–"}`, left, y); y += 14;
+        doc.text(`Buyer: [Your company name here]`, left, y); y += 14;
+        doc.text(`Selected supplier: ${supplier.supplierName || "N/A"}`, left, y); y += 20;
+
+        // ---------- COMMERCIAL TERMS ----------
+        doc.setFont("helvetica", "bold");
+        doc.text("Commercial terms", left, y); y += 14;
+        doc.setFont("helvetica", "normal");
+
+        const commercialLines = [
+          `Destination: ${c.destination || "–"}`,
+          `Incoterm: ${c.incoterm || "–"}`,
+          `Payment terms: ${supplier.payment || c.paymentTerm || "–"}`,
+          `Lead time: ${supplier.leadTime || "–"} days`,
+          `Quote validity: ${supplier.validity || "–"} days`
+        ];
+
+        commercialLines.forEach(line => {
+          const wrapped = doc.splitTextToSize(line, maxW);
+          wrapped.forEach(l => {
+            doc.text(l, left, y);
+            y += 12;
+          });
+        });
+        y += 8;
+
+        if (c.otherRequirements) {
+          doc.setFont("helvetica", "bold");
+          doc.text("Other requirements", left, y); y += 12;
+          doc.setFont("helvetica", "normal");
+          const wrappedReq = doc.splitTextToSize(c.otherRequirements, maxW);
+          wrappedReq.forEach(l => {
+            doc.text(l, left, y);
+            y += 12;
+          });
+          y += 8;
+        }
+
+        // ---------- LINE ITEM TABLE ----------
+        const tableBody = items.map((item, idx) => {
+          const qi = quoteItems[idx] || {};
+          const unitPrice =
+            typeof qi.unitPrice === "number"
+              ? `${currency} ${qi.unitPrice.toFixed(2)}`
+              : "";
+          const lineTotal =
+            typeof qi.lineTotal === "number"
+              ? `${currency} ${qi.lineTotal.toFixed(2)}`
+              : "";
+
+          return [
+            item.line ?? idx + 1,
+            item.description || "",
+            item.grade || "",
+            item.quantity ?? "",
+            item.uom || "",
+            item.sizeText || "",
+            unitPrice,
+            lineTotal
+          ];
+        });
+
+        if (typeof doc.autoTable === "function") {
+          doc.setFont("helvetica", "bold");
+          doc.text("Line items", left, y); y += 6;
+
+          doc.autoTable({
+            startY: y + 6,
+            head: [[
+              "Line",
+              "Description",
+              "Grade",
+              "Qty",
+              "UoM",
+              "Size",
+              "Unit price",
+              "Line total"
+            ]],
+            body: tableBody,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [51, 65, 85], textColor: 255 },
+            margin: { left }
+          });
+
+          y = doc.lastAutoTable.finalY + 16;
+        } else {
+          // Fallback: simple text if autoTable missing
+          doc.setFont("helvetica", "bold");
+          doc.text("Line items", left, y); y += 14;
+          doc.setFont("helvetica", "normal");
+          tableBody.forEach(row => {
+            const line = `${row[0]}. ${row[1]} – Qty ${row[3]} ${row[4]}`;
+            const wrapped = doc.splitTextToSize(line, maxW);
+            wrapped.forEach(l => {
+              if (y > 760) { doc.addPage(); y = 40; }
+              doc.text(l, left, y);
+              y += 12;
+            });
+          });
+          y += 16;
+        }
+
+        // ---------- TOTAL SUMMARY ----------
+        doc.setFont("helvetica", "bold");
+        const totalText =
+          typeof supplier.total === "number"
+            ? `${currency} ${supplier.total.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}`
+            : "N/A";
+        doc.text(`Estimated total value: ${totalText}`, left, y); y += 20;
+
+        // ---------- NARRATIVE (award email) ----------
+        if (lastRfpDraft) {
+          doc.setFont("helvetica", "bold");
+          doc.text("Narrative RFP details", left, y); y += 14;
+          doc.setFont("helvetica", "normal");
+          const wrapped = doc.splitTextToSize(lastRfpDraft, maxW);
+          wrapped.forEach(line => {
+            if (y > 760) { doc.addPage(); y = 40; }
+            doc.text(line, left, y);
+            y += 12;
+          });
+          y += 16;
+        }
+
+        // ---------- SIGNATURES ----------
+        if (y > 700) { doc.addPage(); y = 60; }
+        doc.setFont("helvetica", "bold");
+        doc.text("Signatures", left, y); y += 14;
+        doc.setFont("helvetica", "normal");
+        doc.text("Buyer signature: ______________________      Date: ____________", left, y); y += 20;
+        doc.text("Supplier signature: ____________________   Date: ____________", left, y);
+
+        const filename = `RFP_${rfqId}.pdf`;
+        doc.save(filename);
+
+        const modal = $("pdf-modal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }
+      });
+    }
+
+    // Modal close handler
+    const pdfModal = $("pdf-modal");
+    const pdfModalClose = $("pdf-modal-close");
+    if (pdfModal && pdfModalClose) {
+      pdfModalClose.addEventListener("click", () => {
+        pdfModal.classList.add("hidden");
+        pdfModal.classList.remove("flex");
+      });
+    }
+
+    const priorityButtons = {
+      pricing:  $("priority-pricing"),
+      delivery: $("priority-delivery"),
+      payment:  $("priority-payment")
+    };
+
+    function setPriority(p) {
+      supplierPriority = p;
+      Object.entries(priorityButtons).forEach(([key, btn]) => {
+        if (!btn) return;
+        if (key === p) btn.classList.add("priority-active");
+        else btn.classList.remove("priority-active");
+      });
+      renderQuotes();
+    }
+
+    if (priorityButtons.pricing)  priorityButtons.pricing.addEventListener("click",  () => setPriority("pricing"));
+    if (priorityButtons.delivery) priorityButtons.delivery.addEventListener("click", () => setPriority("delivery"));
+    if (priorityButtons.payment)  priorityButtons.payment.addEventListener("click",  () => setPriority("payment"));
+    setPriority("pricing");
+
+    $("generate-rfp-btn").addEventListener("click", () => {
+      const output = $("rfp-output");
+      if (!output) {
+        console.error("rfp-output textarea not found.");
+        return;
+      }
+
+      if (!currentRequest) {
+        output.value =
+          "Please finalize a structured request and select at least one supplier quote before generating the award email.";
+        return;
+      }
+
+      if (!supplierQuotes || !supplierQuotes.length) {
+        output.value =
+          "No supplier quotes yet. Once you have at least one quote, Crontal can draft an award email for the top-ranked supplier.";
+        return;
+      }
+
+      const idx = typeof getBestSupplierIndex === "function"
+        ? getBestSupplierIndex()
+        : 0;
+
+      if (idx === -1) {
+        output.value =
+          "Cannot determine the top supplier for the current priority. Please make sure at least one quote has price and terms.";
+        return;
+      }
+
+      const target = supplierQuotes[idx];
+      const items  = currentRequest.items || [];
+      const first  = items[0] || {};
+      const c      = currentRequest.commercial || {};
+
+      const lineSummary =
+        items.length === 1
+          ? (first.description || "stainless products")
+          : `${items.length} line items (including ${first.description || "stainless products"})`;
+
+      const totalText =
+        typeof target.total === "number"
+          ? `${target.currency || "USD"} ${target.total.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`
+          : "N/A";
+
+      const rfqId    = currentRequest.id || currentRequest.rfq_id || "reference";
+      const subject  = `Award – RFQ ${rfqId} – ${first.description || "stainless steel products"}`;
+      const delivery = c.destination || "-";
+      const incoterm = c.incoterm || "Incoterm TBD";
+      const leadTime = target.leadTime || "–";
+      const payment  = target.payment || c.paymentTerm || "-";
+      const validity = target.validity || "–";
+
+      const awardEmail = `
+Subject: ${subject}
+
+Dear ${target.supplierName || "Supplier"},
+
+Thank you for your quotation submitted via Crontal for RFQ ${rfqId}. Based on your pricing and commercial terms, we would like to proceed with your offer as the selected supplier.
+
+Summary of the award:
+• RFQ: ${rfqId}
+• Scope: ${lineSummary}
+• Estimated total value: ${totalText}
+• Delivery: ${delivery} (${incoterm})
+• Lead time: ${leadTime} days
+• Payment terms: ${payment}
+• Quote validity: ${validity} days
+
+We have attached the formal RFQ / award document in PDF format reflecting these terms. Please review the attached document, confirm acceptance in writing, and let us know if you have any questions or required clarifications.
+
+Best regards,
+[Your name]
+[Your company]`.trim();
+
+      lastRfpDraft = awardEmail;
+      lastRfpQuote = target;
+
+      output.value = awardEmail;
+
+      const previewEl = $("pdf-preview-text");
+      if (previewEl) {
+        previewEl.textContent = awardEmail;
+      }
+
+      const modal = $("pdf-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    });
+
+    // Award email + PDF handlers now fully wired
+  </script>
+</body>
+</html>
