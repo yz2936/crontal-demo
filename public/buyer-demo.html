@@ -150,7 +150,8 @@
           </button>
         </div>
       </div>
-
+      </header>
+      
       <!-- Journey Bar -->
       <div id="buyer-journey"
           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
@@ -175,7 +176,7 @@
           <span>Compare quotes & award</span>
         </button>
       </div>
-    </header>
+    
 
     <!-- Column labels -->
     <div class="mt-6 grid gap-6 md:grid-cols-2 text-[11px] text-slate-500">
@@ -1346,7 +1347,7 @@
         const supplier = lastRfpQuote;
         const c        = currentRequest.commercial || {};
         const items    = currentRequest.items || [];
-        const quoteItems = supplier.items || [];
+        const quoteItems = supplier.items || {};
         const currency = supplier.currency || "USD";
 
         doc.setFont("helvetica", "bold");

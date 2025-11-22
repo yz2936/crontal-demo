@@ -110,7 +110,7 @@
           </button>
         </div>
       </div>
-
+      </header>
       <!-- 3-step journey -->
       <div id="supplier-journey"
           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
@@ -141,7 +141,7 @@
           <span data-i18n="flow.step3">Submit quote</span>
         </button>
       </div>
-    </header>
+    
 
 
     <main class="space-y-4">
@@ -362,6 +362,9 @@
 
     let currentRequest = null;
     let supplierUnitPrices = [];
+
+    // persist demo quotes so other demo tabs (buyer view) can observe them
+    const QUOTES_STORAGE_PREFIX = "crontal-quotes-";
 
     // ---------- i18n for supplier ----------
     const I18N_SUPPLIER = {
@@ -912,11 +915,15 @@
         alert("No active RFQ loaded. Cannot submit quote.");
         return;
       }
+      const btn = $("supplier-submit-btn");
       const { hasPrice, total } = computeSupplierTotal();
       if (!hasPrice) {
         alert("Please enter at least one unit price before submitting your quote.");
         return;
       }
+
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
 
       const name     = $("supplier-name-input")?.value.trim() || "Unnamed supplier";
       const currency = $("supplier-currency-input")?.value || "USD";
@@ -965,11 +972,26 @@
           alert("Failed to submit quote to buyer (server error).");
           return;
         }
+
+        // Persist a copy in localStorage under a RFQ key so buyer-demo (or other tabs) can pick it up
+        try {
+          const key = QUOTES_STORAGE_PREFIX + rfqId;
+          const prev = localStorage.getItem(key);
+          const arr = prev ? JSON.parse(prev) : [];
+          arr.push(quote);
+          localStorage.setItem(key, JSON.stringify(arr));
+        } catch (err) {
+          console.warn("Could not persist quote to localStorage (demo):", err);
+        }
++
         alert("Quote submitted to buyer. Thank you.");
         setSupplierJourneyStep(3);
       } catch (err) {
         console.error("Submit quote error:", err);
         alert("Network error while submitting quote.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = tSupplier("btn.submitQuote") || "Submit quote to buyer (demo)";
       }
     });
 
