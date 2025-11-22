@@ -65,82 +65,80 @@
     }
   </style>
 </head>
-<body class="min-h-screen">
-  <div class="max-w-5xl mx-auto px-4 py-6 md:py-10 space-y-6">
-    <header class="flex flex-col gap-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-        <!-- Left: Brand + Title -->
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-            <span class="text-accent font-semibold text-lg">C</span>
-          </div>
-
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-800" data-i18n="app.brand">
-                Crontal
-              </h1>
-
-              <span
-                class="inline-flex items-center rounded-full border border-accent/50 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent bg-accent/10 font-medium"
-                data-i18n="badge.supplier">
-                Supplier portal
-              </span>
-            </div>
-
-            <p class="text-xs md:text-sm text-slate-600 mt-1" data-i18n="app.subtitle">
-              You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.
-            </p>
-          </div>
-        </div>
-
-        <!-- Right: Language + Guide Button -->
-        <div class="flex items-center gap-3 self-start md:self-auto">
-          <select id="lang-select-supplier"
-                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="zh">简体中文</option>
-          </select>
-
-          <button id="supplier-tour-btn"
-                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-            <span data-i18n="btn.guide">Guide me through this</span>
-          </button>
-        </div>
+<header class="flex flex-col gap-4">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <!-- Left: Brand + Title -->
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center shadow-sm">
+        <span class="text-accent font-semibold text-lg">C</span>
       </div>
-      </header>
-      <!-- 3-step journey -->
-      <div id="supplier-journey"
-          class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
-
-        <button type="button"
-                id="supplier-step-1"
-                class="journey-step journey-step-active text-accent">
-          <span class="text-accent font-semibold">1</span>
-          <span data-i18n="flow.step1">Review RFQ</span>
-        </button>
-
-        <span class="text-slate-300">›</span>
-
-        <button type="button"
-                id="supplier-step-2"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">2</span>
-          <span data-i18n="flow.step2">Fill pricing & terms</span>
-        </button>
-
-        <span class="text-slate-300">›</span>
-
-        <button type="button"
-                id="supplier-step-3"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">3</span>
-          <span data-i18n="flow.step3">Submit quote</span>
-        </button>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">
+            Crontal
+          </h1>
+          <span
+            class="inline-flex items-center rounded-full border border-accent/60 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent bg-accent/10 font-semibold"
+            data-i18n="badge.supplier">
+            Supplier portal
+          </span>
+        </div>
+        <p class="text-xs md:text-sm text-slate-600 mt-1" data-i18n="app.subtitle">
+          You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.
+        </p>
       </div>
+    </div>
+
+    <!-- Right: Language + Guide Button -->
+    <div class="flex items-center gap-3 self-start md:self-auto">
+      <select id="lang-select-supplier"
+              class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-700 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent shadow-xs">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="zh">简体中文</option>
+      </select>
+
+      <button id="supplier-tour-btn"
+              class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 hover:border-accent hover:text-accent hover:bg-accent/5 transition shadow-xs">
+        <span data-i18n="btn.guide">Guide me through this</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- FLOW BAR -->
+<div id="supplier-journey"
+     class="sticky top-0 z-40 mt-4 inline-flex flex-wrap items-center gap-2 bg-gradient-to-r from-accent/10 via-white to-white backdrop-blur-xl border border-accent/30 rounded-2xl px-4 py-2.5 text-[11px] shadow-md">
+  <span class="text-accent mr-2 uppercase tracking-wide font-semibold" data-i18n="flow.label">Flow</span>
+
+  <!-- Step 1 – active by default -->
+  <button type="button"
+          id="supplier-step-1"
+          class="inline-flex items-center gap-1 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] text-white font-medium shadow-sm">
+    <span class="opacity-90">1</span>
+    <span data-i18n="flow.step1">Review RFQ</span>
+  </button>
+
+  <span class="text-slate-300">›</span>
+
+  <!-- Step 2 – inactive -->
+  <button type="button"
+          id="supplier-step-2"
+          class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white/70 px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent/40 hover:text-accent transition">
+    <span class="text-slate-400">2</span>
+    <span data-i18n="flow.step2">Fill pricing & terms</span>
+  </button>
+
+  <span class="text-slate-300">›</span>
+
+  <!-- Step 3 – inactive -->
+  <button type="button"
+          id="supplier-step-3"
+          class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white/70 px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent/40 hover:text-accent transition">
+    <span class="text-slate-400">3</span>
+    <span data-i18n="flow.step3">Submit quote</span>
+  </button>
+</div>
     
 
 
