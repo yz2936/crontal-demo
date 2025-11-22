@@ -112,49 +112,59 @@
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-            <span class="text-accent font-semibold text-lg">C</span>
+            <span class="text-accent font-semibold text-lg" data-i18n="app.title">C</span>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">Crontal</h1>
-              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white">
+              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">Crontal</h1>
+              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white" data-i18n="badge.buyer">
                 Buyer RFQ
               </span>
             </div>
-            <p class="text-xs md:text-sm text-slate-500 mt-1">
+            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
               Turn informal descriptions and specs into a structured RFQ you can share with suppliers.
             </p>
           </div>
         </div>
-        <button id="buyer-tour-btn"
-                class="self-start md:self-auto inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-          <span>Guide me through this</span>
-        </button>
+
+        <div class="flex items-center gap-3 self-start md:self-auto">
+          <select id="lang-select-buyer"
+                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">简体中文</option>
+          </select>
+
+          <button id="buyer-tour-btn"
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+            <span data-i18n="btn.guide">Guide me through this</span>
+          </button>
+        </div>
       </div>
 
       <!-- 3-step journey strip -->
       <div id="buyer-journey"
-           class="mt-1 inline-flex flex-wrap items-center gap-2 bg-white/80 border border-slate-200 rounded-2xl px-3 py-2 shadow-sm text-[11px]">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide">Flow</span>
+           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
+        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
         <button type="button"
                 id="buyer-step-1"
                 class="journey-step journey-step-active">
           <span class="text-slate-400">1</span>
-          <span>Describe & upload</span>
+          <span data-i18n="flow.step1">Describe & upload</span>
         </button>
         <span class="text-slate-300">›</span>
         <button type="button"
                 id="buyer-step-2"
                 class="journey-step journey-step-inactive">
           <span class="text-slate-400">2</span>
-          <span>Review & share RFQ</span>
+          <span data-i18n="flow.step2">Review & share RFQ</span>
         </button>
         <span class="text-slate-300">›</span>
         <button type="button"
                 id="buyer-step-3"
                 class="journey-step journey-step-inactive">
           <span class="text-slate-400">3</span>
-          <span>Compare quotes & award</span>
+          <span data-i18n="flow.step3">Compare quotes & award</span>
         </button>
       </div>
     </header>
@@ -162,12 +172,12 @@
     <!-- Column labels -->
     <div class="mt-6 grid gap-6 md:grid-cols-2 text-[11px] text-slate-500">
       <div class="md:pr-4">
-        <p class="uppercase tracking-wide mb-1">Build request</p>
-        <p>Describe what you need and upload specs. Crontal will draft the RFQ for you.</p>
+        <p class="uppercase tracking-wide mb-1" data-i18n="col.left.title">Build request</p>
+        <p data-i18n="col.left.desc">Describe what you need and upload specs. Crontal will draft the RFQ for you.</p>
       </div>
       <div class="md:pl-4">
-        <p class="uppercase tracking-wide mb-1">Review & decide</p>
-        <p>Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.</p>
+        <p class="uppercase tracking-wide mb-1" data-i18n="col.right.title">Review & decide</p>
+        <p data-i18n="col.right.desc">Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.</p>
       </div>
     </div>
 
@@ -178,29 +188,30 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col text-xs">
           <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-200">
             <div>
-              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+              <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.upload.title">
                 Upload design / spec files
               </h2>
-              <p class="mt-1 text-xs text-slate-500">
+              <p class="mt-1 text-xs text-slate-500" data-i18n="section.upload.subtitle">
                 Upload engineering PDFs and Excel tech specs to auto-generate line items.
               </p>
             </div>
           </div>
           <div class="mt-3 space-y-2">
             <div>
-              <label class="text-[11px] uppercase tracking-wide text-slate-500 mb-1 block">
+              <label class="text-[11px] uppercase tracking-wide text-slate-500 mb-1 block" data-i18n="section.upload.filesLabel">
                 Files
               </label>
               <input id="file-upload-input" type="file" multiple
                      class="text-xs text-slate-800"
                      accept=".pdf,.xls,.xlsx,.csv,.txt" />
-              <p class="text-[11px] text-slate-500 mt-1">
+              <p class="text-[11px] text-slate-500 mt-1" data-i18n="section.upload.filesHelp">
                 Supported now: engineering PDFs (.pdf) and tech spec spreadsheets (.xls, .xlsx). Max 5 files per run.
               </p>
             </div>
             <div class="flex items-center gap-2 mt-2">
               <button id="file-upload-btn"
-                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-i18n="section.upload.button">
                 Parse files into line items
               </button>
               <p id="file-upload-status" class="text-[11px] text-slate-500"></p>
@@ -212,16 +223,16 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col">
           <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
-              <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+              <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.chat.title">
                 Describe what you need
               </h2>
-              <p class="mt-1 text-xs text-slate-500">
+              <p class="mt-1 text-xs text-slate-500" data-i18n="section.chat.subtitle">
                 Use plain language. Crontal will turn this into a structured RFQ on the right.
               </p>
             </div>
           </div>
           <div class="mt-3 text-xs flex flex-col gap-2">
-            <label class="text-[11px] uppercase tracking-wide text-slate-500">
+            <label class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.chat.label">
               Conversation
             </label>
             <div id="chat-window"
@@ -229,9 +240,11 @@
             <div class="mt-2 flex items-center gap-2">
               <input id="chat-input" type="text"
                      class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent"
+                     data-i18n-placeholder="chat.placeholder"
                      placeholder="Example: 20 pcs 304L tubes, 2'' OD, 6m, CIF Houston, Net 30..." />
               <button id="chat-send-btn"
-                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+                      class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
+                      data-i18n="btn.send">
                 Send
               </button>
             </div>
@@ -242,20 +255,22 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
           <div class="flex items-center justify-between gap-2 mb-2">
             <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-500">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.award.stepLabel">
                 Step 3 · Award email & PDF
               </p>
-              <p class="text-[11px] text-slate-500">
+              <p class="text-[11px] text-slate-500" data-i18n="section.award.subtitle">
                 Once you’ve picked a supplier, draft the award email and export the full RFQ as a PDF.
               </p>
             </div>
             <button id="generate-rfp-btn"
-                    class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition">
+                    class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition"
+                    data-i18n="btn.generateAward">
               Generate award email
             </button>
           </div>
           <textarea id="rfp-output"
                     class="mt-2 h-48 md:h-56 w-full rounded-xl px-3 py-2 text-xs md:text-[13px] leading-relaxed bg-slate-950/40 border border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
+                    data-i18n-placeholder="award.placeholder"
                     placeholder="Award email will appear here after you click “Generate award email”."></textarea>
         </div>
       </section>
@@ -266,38 +281,38 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div>
-              <h3 class="text-sm font-semibold text-slate-900">
+              <h3 class="text-sm font-semibold text-slate-900" data-i18n="section.rfq.title">
                 Step 2 · RFQ summary for suppliers
               </h3>
-              <p class="mt-1 text-xs text-slate-500">
+              <p class="mt-1 text-xs text-slate-500" data-i18n="section.rfq.subtitle">
                 This is what suppliers will see when you share the request link. Edit any field before sending.
               </p>
             </div>
             <div class="text-right text-xs">
-              <p class="text-[11px] uppercase tracking-wide text-slate-500">Request ID</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.rfq.requestIdLabel">Request ID</p>
               <p id="request-id-label" class="mt-0.5 text-slate-700 font-medium">None yet</p>
             </div>
           </div>
 
-          <div id="buyer-request-empty" class="text-[11px] text-slate-500">
+          <div id="buyer-request-empty" class="text-[11px] text-slate-500" data-i18n="section.rfq.empty">
             No RFQ yet. Start by describing what you need or uploading files on the left.
           </div>
 
           <div id="buyer-request-block" class="hidden space-y-3">
             <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1" data-i18n="section.rfq.lineHeader">
                 Line items (editable)
               </p>
-              <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50">
+              <div class="overflow-x-auto overflow-y-auto max-h-72 rounded-xl border border-slate-200 bg-slate-50">
                 <table class="min-w-full text-[11px]">
                   <thead class="bg-slate-100 text-slate-500">
                     <tr>
-                      <th class="px-3 py-2 text-left font-normal">Line</th>
-                      <th class="px-3 py-2 text-left font-normal">Description</th>
-                      <th class="px-3 py-2 text-left font-normal">Grade</th>
-                      <th class="px-3 py-2 text-left font-normal">Qty</th>
-                      <th class="px-3 py-2 text-left font-normal">UoM</th>
-                      <th class="px-3 py-2 text-left font-normal">Size</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.line">Line</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.description">Description</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.grade">Grade</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.qty">Qty</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.uom">UoM</th>
+                      <th class="px-3 py-2 text-left font-normal" data-i18n="table.size">Size</th>
                     </tr>
                   </thead>
                   <tbody id="buyer-items-body" class="divide-y divide-slate-200 text-slate-800"></tbody>
@@ -307,25 +322,26 @@
 
             <div class="grid gap-3 md:grid-cols-3">
               <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <p class="text-[11px] uppercase tracking-wide text-slate-500">Destination</p>
+                <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="rfq.destination">Destination</p>
                 <p id="buyer-destination" class="mt-1 text-slate-800">–</p>
               </div>
               <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <p class="text-[11px] uppercase tracking-wide text-slate-500">Incoterm</p>
+                <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="rfq.incoterm">Incoterm</p>
                 <p id="buyer-incoterm" class="mt-1 text-slate-800">–</p>
               </div>
               <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <p class="text-[11px] uppercase tracking-wide text-slate-500">Payment terms</p>
+                <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="rfq.payment">Payment terms</p>
                 <p id="buyer-payment" class="mt-1 text-slate-800">–</p>
               </div>
             </div>
 
             <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500 mb-1" data-i18n="rfq.otherReqLabel">
                 Other requirements (optional)
               </p>
               <textarea id="buyer-other-req"
                         class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+                        data-i18n-placeholder="otherReq.placeholder"
                         placeholder="Documentation, standards, QA/inspection, packaging, special notes..."></textarea>
             </div>
           </div>
@@ -335,26 +351,29 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-500">Step 2 · Share request link</p>
-              <p class="text-slate-700" id="share-link-label">
+              <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.share.stepLabel">
+                Step 2 · Share request link
+              </p>
+              <p class="text-slate-700" id="share-link-label" data-i18n="section.share.subtitle">
                 Once your RFQ looks right, share this link with suppliers so they can respond.
               </p>
             </div>
           </div>
 
           <div id="share-link-block" class="mt-2 hidden">
-            <label class="text-[11px] uppercase tracking-wide text-slate-500">
+            <label class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.share.blockLabel">
               Request link
             </label>
             <div class="mt-1 flex items-center gap-2">
               <input id="share-link-input" type="text" readonly
                      class="flex-1 rounded-xl px-3 py-1.5 text-[11px] text-slate-700 font-mono" />
               <button id="copy-link-btn"
-                      class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+                      class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition"
+                      data-i18n="btn.copy">
                 Copy
               </button>
             </div>
-            <p class="mt-1 text-[11px] text-slate-500">
+            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.share.blockHint">
               Send this link by email or chat. Suppliers will see your RFQ in their Crontal portal.
             </p>
           </div>
@@ -364,36 +383,40 @@
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <h3 class="text-sm font-semibold text-slate-900">
+              <h3 class="text-sm font-semibold text-slate-900" data-i18n="section.quotes.title">
                 Step 3 · Supplier responses
               </h3>
-              <p class="mt-1 text-xs text-slate-500">
+              <p class="mt-1 text-xs text-slate-500" data-i18n="section.quotes.subtitle">
                 As suppliers respond, their offers will appear here and be ranked based on your selected priority.
               </p>
             </div>
             <div class="flex flex-col items-end gap-1">
               <div class="flex items-center gap-2 text-xs">
                 <div class="text-right">
-                  <p class="text-[11px] uppercase tracking-wide text-slate-500">Count</p>
+                  <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="quotes.countLabel">Count</p>
                   <p id="quotes-count" class="mt-0.5 text-slate-700 font-medium">0</p>
                 </div>
                 <button id="refresh-quotes-btn"
-                        class="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] text-slate-600 hover:border-accent/60 hover:text-accent hover:bg-accent/5 transition">
+                        class="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] text-slate-600 hover:border-accent/60 hover:text-accent hover:bg-accent/5 transition"
+                        data-i18n="btn.refresh">
                   Refresh
                 </button>
               </div>
               <div class="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[10px] gap-1 mt-1">
-                <span class="text-slate-500 mr-1">Rank by:</span>
+                <span class="text-slate-500 mr-1" data-i18n="rank.label">Rank by:</span>
                 <button id="priority-pricing"
-                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-700 priority-active">
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-700 priority-active"
+                        data-i18n="rank.pricing">
                   Pricing
                 </button>
                 <button id="priority-delivery"
-                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40"
+                        data-i18n="rank.delivery">
                   Delivery
                 </button>
                 <button id="priority-payment"
-                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40"
+                        data-i18n="rank.payment">
                   Payment terms
                 </button>
               </div>
@@ -401,7 +424,7 @@
           </div>
 
           <div class="mt-2 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
-            <div id="quotes-empty" class="text-[11px] text-slate-500">
+            <div id="quotes-empty" class="text-[11px] text-slate-500" data-i18n="section.quotes.empty">
               No supplier quotes yet. Share the request link above, then click Refresh.
             </div>
             <div id="quotes-list" class="hidden mt-1 space-y-2"></div>
@@ -417,13 +440,14 @@
     <div class="max-w-2xl w-[90%] bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-400/40 p-4 md:p-5 flex flex-col max-h-[80vh]">
       <div class="flex items-center justify-between gap-3 mb-2">
         <div>
-          <h2 class="text-sm font-semibold text-slate-900">RFP PDF preview</h2>
-          <p class="text-[11px] text-slate-500">
+          <h2 class="text-sm font-semibold text-slate-900" data-i18n="pdf.preview.title">RFP PDF preview</h2>
+          <p class="text-[11px] text-slate-500" data-i18n="pdf.preview.subtitle">
             This is the content that will be exported to PDF with signature lines.
           </p>
         </div>
         <button id="pdf-modal-close"
-                class="text-[11px] text-slate-500 hover:text-slate-900 px-2 py-1 rounded-lg border border-transparent hover:border-slate-300">
+                class="text-[11px] text-slate-500 hover:text-slate-900 px-2 py-1 rounded-lg border border-transparent hover:border-slate-300"
+                data-i18n="btn.close">
           Close
         </button>
       </div>
@@ -432,11 +456,12 @@
              class="whitespace-pre-wrap font-mono text-[11px]"></pre>
       </div>
       <div class="mt-3 flex items-center justify-between gap-2">
-        <p class="text-[11px] text-slate-500">
+        <p class="text-[11px] text-slate-500" data-i18n="pdf.preview.help">
           Click “Download PDF” to save a copy with signature areas.
         </p>
         <button id="pdf-download-btn"
-                class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+                class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
+                data-i18n="btn.download">
           Download PDF
         </button>
       </div>
@@ -482,6 +507,263 @@
 
     const { jsPDF } = window.jspdf || {};
     const $ = id => document.getElementById(id);
+
+    // ---------- i18n for buyer ----------
+    const I18N_BUYER = {
+      en: {
+        "app.brand": "Crontal",
+        "app.subtitle": "Turn informal descriptions and specs into a structured RFQ you can share with suppliers.",
+        "badge.buyer": "Buyer RFQ",
+
+        "flow.label": "Flow",
+        "flow.step1": "Describe & upload",
+        "flow.step2": "Review & share RFQ",
+        "flow.step3": "Compare quotes & award",
+
+        "btn.guide": "Guide me through this",
+        "btn.send": "Send",
+        "btn.copy": "Copy",
+        "btn.refresh": "Refresh",
+        "btn.generateAward": "Generate award email",
+        "btn.close": "Close",
+        "btn.download": "Download PDF",
+
+        "col.left.title": "Build request",
+        "col.left.desc": "Describe what you need and upload specs. Crontal will draft the RFQ for you.",
+        "col.right.title": "Review & decide",
+        "col.right.desc": "Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.",
+
+        "section.upload.title": "Upload design / spec files",
+        "section.upload.subtitle": "Upload engineering PDFs and Excel tech specs to auto-generate line items.",
+        "section.upload.filesLabel": "Files",
+        "section.upload.filesHelp": "Supported now: engineering PDFs (.pdf) and tech spec spreadsheets (.xls, .xlsx). Max 5 files per run.",
+        "section.upload.button": "Parse files into line items",
+
+        "section.chat.title": "Describe what you need",
+        "section.chat.subtitle": "Use plain language. Crontal will turn this into a structured RFQ on the right.",
+        "section.chat.label": "Conversation",
+
+        "section.award.stepLabel": "Step 3 · Award email & PDF",
+        "section.award.subtitle": "Once you’ve picked a supplier, draft the award email and export the full RFQ as a PDF.",
+
+        "section.rfq.title": "Step 2 · RFQ summary for suppliers",
+        "section.rfq.subtitle": "This is what suppliers will see when you share the request link. Edit any field before sending.",
+        "section.rfq.requestIdLabel": "Request ID",
+        "section.rfq.empty": "No RFQ yet. Start by describing what you need or uploading files on the left.",
+        "section.rfq.lineHeader": "Line items (editable)",
+
+        "table.line": "Line",
+        "table.description": "Description",
+        "table.grade": "Grade",
+        "table.qty": "Qty",
+        "table.uom": "UoM",
+        "table.size": "Size",
+
+        "rfq.destination": "Destination",
+        "rfq.incoterm": "Incoterm",
+        "rfq.payment": "Payment terms",
+        "rfq.otherReqLabel": "Other requirements (optional)",
+
+        "section.share.stepLabel": "Step 2 · Share request link",
+        "section.share.subtitle": "Once your RFQ looks right, share this link with suppliers so they can respond.",
+        "section.share.blockLabel": "Request link",
+        "section.share.blockHint": "Send this link by email or chat. Suppliers will see your RFQ in their Crontal portal.",
+
+        "section.quotes.title": "Step 3 · Supplier responses",
+        "section.quotes.subtitle": "As suppliers respond, their offers will appear here and be ranked based on your selected priority.",
+        "section.quotes.empty": "No supplier quotes yet. Share the request link above, then click Refresh.",
+        "quotes.countLabel": "Count",
+
+        "rank.label": "Rank by:",
+        "rank.pricing": "Pricing",
+        "rank.delivery": "Delivery",
+        "rank.payment": "Payment terms",
+
+        "pdf.preview.title": "RFP PDF preview",
+        "pdf.preview.subtitle": "This is the content that will be exported to PDF with signature lines.",
+        "pdf.preview.help": "Click “Download PDF” to save a copy with signature areas.",
+
+        "chat.placeholder": "Example: 20 pcs 304L tubes, 2'' OD, 6m, CIF Houston, Net 30...",
+        "award.placeholder": "Award email will appear here after you click “Generate award email”.",
+        "otherReq.placeholder": "Documentation, standards, QA/inspection, packaging, special notes..."
+      },
+      es: {
+        "app.brand": "Crontal",
+        "app.subtitle": "Convierte descripciones informales y planos en un RFQ estructurado que puedas compartir con proveedores.",
+        "badge.buyer": "RFQ del comprador",
+
+        "flow.label": "Flujo",
+        "flow.step1": "Describir y cargar",
+        "flow.step2": "Revisar y compartir RFQ",
+        "flow.step3": "Comparar ofertas y adjudicar",
+
+        "btn.guide": "Guíame paso a paso",
+        "btn.send": "Enviar",
+        "btn.copy": "Copiar",
+        "btn.refresh": "Actualizar",
+        "btn.generateAward": "Generar correo de adjudicación",
+        "btn.close": "Cerrar",
+        "btn.download": "Descargar PDF",
+
+        "col.left.title": "Crear solicitud",
+        "col.left.desc": "Describe lo que necesitas y carga las especificaciones. Crontal redactará el RFQ por ti.",
+        "col.right.title": "Revisar y decidir",
+        "col.right.desc": "Edita el RFQ, compártelo con proveedores, compara ofertas y genera el paquete de adjudicación.",
+
+        "section.upload.title": "Subir planos / archivos de especificaciones",
+        "section.upload.subtitle": "Sube PDFs de ingeniería y hojas de especificaciones para generar partidas automáticamente.",
+        "section.upload.filesLabel": "Archivos",
+        "section.upload.filesHelp": "Formatos admitidos: PDF de ingeniería (.pdf) y hojas de especificaciones (.xls, .xlsx). Máx. 5 archivos por ejecución.",
+        "section.upload.button": "Convertir archivos en partidas",
+
+        "section.chat.title": "Describe lo que necesitas",
+        "section.chat.subtitle": "Usa lenguaje natural. Crontal lo convertirá en un RFQ estructurado en la parte derecha.",
+        "section.chat.label": "Conversación",
+
+        "section.award.stepLabel": "Paso 3 · Correo de adjudicación y PDF",
+        "section.award.subtitle": "Una vez elegido el proveedor, redacta el correo de adjudicación y exporta el RFQ completo en PDF.",
+
+        "section.rfq.title": "Paso 2 · Resumen de RFQ para proveedores",
+        "section.rfq.subtitle": "Esto es lo que verán los proveedores cuando compartas el enlace. Puedes editar cualquier campo antes de enviarlo.",
+        "section.rfq.requestIdLabel": "ID de la solicitud",
+        "section.rfq.empty": "Aún no hay RFQ. Empieza describiendo lo que necesitas o subiendo archivos a la izquierda.",
+        "section.rfq.lineHeader": "Partidas (editables)",
+
+        "table.line": "Línea",
+        "table.description": "Descripción",
+        "table.grade": "Calidad",
+        "table.qty": "Cant.",
+        "table.uom": "Unidad",
+        "table.size": "Medida",
+
+        "rfq.destination": "Destino",
+        "rfq.incoterm": "Incoterm",
+        "rfq.payment": "Condiciones de pago",
+        "rfq.otherReqLabel": "Otros requisitos (opcional)",
+
+        "section.share.stepLabel": "Paso 2 · Compartir enlace de solicitud",
+        "section.share.subtitle": "Cuando el RFQ esté listo, comparte este enlace con los proveedores para que coticen.",
+        "section.share.blockLabel": "Enlace de solicitud",
+        "section.share.blockHint": "Envía este enlace por correo o chat. Los proveedores verán tu RFQ en el portal de Crontal.",
+
+        "section.quotes.title": "Paso 3 · Respuestas de proveedores",
+        "section.quotes.subtitle": "Cuando los proveedores respondan, sus ofertas aparecerán aquí y se ordenarán según la prioridad que elijas.",
+        "section.quotes.empty": "Todavía no hay ofertas. Comparte el enlace de solicitud y luego haz clic en Actualizar.",
+        "quotes.countLabel": "Número",
+
+        "rank.label": "Ordenar por:",
+        "rank.pricing": "Precio",
+        "rank.delivery": "Entrega",
+        "rank.payment": "Pago",
+
+        "pdf.preview.title": "Vista previa del PDF del RFQ",
+        "pdf.preview.subtitle": "Este es el contenido que se exportará a PDF con espacios para firmas.",
+        "pdf.preview.help": "Haz clic en “Descargar PDF” para guardar una copia con áreas de firma.",
+
+        "chat.placeholder": "Ejemplo: 20 uds de tubos 304L, 2'' OD, 6 m, CIF Houston, pago a 30 días...",
+        "award.placeholder": "El correo de adjudicación aparecerá aquí cuando hagas clic en “Generar correo de adjudicación”.",
+        "otherReq.placeholder": "Documentación, normas, QA/inspección, embalaje, notas especiales..."
+      },
+      zh: {
+        "app.brand": "Crontal",
+        "app.subtitle": "把零散的描述和图纸信息整理成结构化的询价单，方便统一发给供应商。",
+        "badge.buyer": "采购询价单（买方）",
+
+        "flow.label": "流程",
+        "flow.step1": "描述需求并上传文件",
+        "flow.step2": "检查并分享询价单",
+        "flow.step3": "对比报价并选择中标方",
+
+        "btn.guide": "引导我一步步操作",
+        "btn.send": "发送",
+        "btn.copy": "复制",
+        "btn.refresh": "刷新",
+        "btn.generateAward": "生成授标邮件",
+        "btn.close": "关闭",
+        "btn.download": "下载 PDF",
+
+        "col.left.title": "创建询价需求",
+        "col.left.desc": "说明你的采购需求并上传规格文件，Crontal 会帮你生成 RFQ 草稿。",
+        "col.right.title": "审核并决策",
+        "col.right.desc": "在发送给供应商之前检查 RFQ，随后对比报价并生成授标文件。",
+
+        "section.upload.title": "上传图纸 / 规格文件",
+        "section.upload.subtitle": "上传工程 PDF 或规格表，系统会自动生成物料行。",
+        "section.upload.filesLabel": "文件",
+        "section.upload.filesHelp": "目前支持工程 PDF（.pdf）和规格表（.xls, .xlsx），每次最多 5 个文件。",
+        "section.upload.button": "解析文件生成物料行",
+
+        "section.chat.title": "说明你的采购需求",
+        "section.chat.subtitle": "用自然语言描述即可，Crontal 会在右侧生成结构化的 RFQ。",
+        "section.chat.label": "对话",
+
+        "section.award.stepLabel": "步骤三 · 授标邮件与 PDF",
+        "section.award.subtitle": "选定供应商后，在这里生成授标邮件，并导出完整 RFQ PDF。",
+
+        "section.rfq.title": "步骤二 · 发给供应商的 RFQ 摘要",
+        "section.rfq.subtitle": "供应商打开链接时会看到这些内容，你可以在发送前修改任何字段。",
+        "section.rfq.requestIdLabel": "询价单编号",
+        "section.rfq.empty": "尚未生成 RFQ。请先在左侧描述需求或上传文件。",
+        "section.rfq.lineHeader": "物料行（可编辑）",
+
+        "table.line": "行号",
+        "table.description": "描述",
+        "table.grade": "材质",
+        "table.qty": "数量",
+        "table.uom": "单位",
+        "table.size": "规格",
+
+        "rfq.destination": "目的地",
+        "rfq.incoterm": "贸易条款",
+        "rfq.payment": "付款条件",
+        "rfq.otherReqLabel": "其他要求（可选）",
+
+        "section.share.stepLabel": "步骤二 · 分享询价链接",
+        "section.share.subtitle": "当 RFQ 信息确认无误后，将此链接发给供应商，让他们在线报价。",
+        "section.share.blockLabel": "询价链接",
+        "section.share.blockHint": "通过邮件或聊天把此链接发给供应商，他们会在 Crontal 供应商门户中看到 RFQ。",
+
+        "section.quotes.title": "步骤三 · 供应商报价",
+        "section.quotes.subtitle": "供应商的报价会出现在这里，你可以按照价格、交期或付款条件进行排序。",
+        "section.quotes.empty": "暂时没有报价。请先把链接发给供应商，然后点击“刷新”。",
+        "quotes.countLabel": "数量",
+
+        "rank.label": "排序依据：",
+        "rank.pricing": "价格",
+        "rank.delivery": "交期",
+        "rank.payment": "付款条件",
+
+        "pdf.preview.title": "RFQ PDF 预览",
+        "pdf.preview.subtitle": "这里是导出 PDF 时显示的内容，并包含签字位置。",
+        "pdf.preview.help": "点击“下载 PDF”，保存带签字区域的文件。",
+
+        "chat.placeholder": "示例：20 支 304L 不锈钢管，2'' 外径，6 米，CIF 休斯顿，账期 30 天……",
+        "award.placeholder": "点击“生成授标邮件”后，这里会显示邮件内容。",
+        "otherReq.placeholder": "文件要求、执行标准、质检、包装方式、特殊说明等……"
+      }
+    };
+
+    let currentLangBuyer = "en";
+
+    function tBuyer(key) {
+      return I18N_BUYER[currentLangBuyer]?.[key] ||
+             I18N_BUYER.en[key] ||
+             key;
+    }
+
+    function applyBuyerLanguage(lang) {
+      currentLangBuyer = lang;
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.dataset.i18n;
+        el.textContent = tBuyer(key);
+      });
+
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        const key = el.dataset.i18nPlaceholder;
+        el.placeholder = tBuyer(key);
+      });
+    }
 
     function setBuyerJourneyStep(step) {
       const s1 = $("buyer-step-1");
@@ -649,15 +931,13 @@
 
       if (!currentRequest) {
         block.classList.add("hidden");
-        label.textContent =
-          "Once your RFQ looks right, share this link with suppliers so they can respond.";
+        label.textContent = tBuyer("section.share.subtitle");
         input.value = "";
         return;
       }
 
       block.classList.remove("hidden");
-      label.textContent =
-        "Share this link with suppliers so they can view this RFQ and submit quotes in their portal.";
+      label.textContent = tBuyer("section.share.subtitle");
 
       currentRequest.id = currentRequest.id || currentRequest.rfq_id || ("RFQ-" + Date.now());
       const rfqId = currentRequest.id;
@@ -749,10 +1029,10 @@
       const bestIdx = getBestSupplierIndex();
       const priorityLabel =
         supplierPriority === "pricing"
-          ? "pricing"
+          ? tBuyer("rank.pricing")
           : supplierPriority === "delivery"
-          ? "delivery timeline"
-          : "payment terms";
+          ? tBuyer("rank.delivery")
+          : tBuyer("rank.payment");
 
       supplierQuotes.forEach((q, idx) => {
         const isBest = idx === bestIdx;
@@ -950,7 +1230,7 @@
         "text-[11px] " + (isError ? "text-red-500" : "text-slate-500");
     }
 
-    // Chat seeding
+    // Chat seeding (still English for now)
     clarifyMessages.push({
       role: "assistant",
       content: "Hi! I’m Crontal’s RFQ assistant. Tell me what you’d like to buy (sizes, grades, quantities, delivery location, payment terms), and I’ll turn it into a structured table on the right that you can edit."
@@ -1033,7 +1313,6 @@
       });
     }
 
-    // PDF download handler
     const pdfDownloadBtn = $("pdf-download-btn");
     if (pdfDownloadBtn) {
       pdfDownloadBtn.addEventListener("click", () => {
@@ -1205,7 +1484,6 @@
         const modal = $("pdf-modal");
         if (modal) {
           modal.classList.add("hidden");
-          modal.classList.remove("flex");
         }
       });
     }
@@ -1475,6 +1753,16 @@ Best regards,
         startWalkthrough("buyer", buyerTourSteps);
       });
     }
+
+    // Language selector hookup
+    const langSelectBuyer = $("lang-select-buyer");
+    if (langSelectBuyer) {
+      langSelectBuyer.addEventListener("change", (e) => {
+        applyBuyerLanguage(e.target.value);
+      });
+    }
+    // Apply default language
+    applyBuyerLanguage("en");
   </script>
 </body>
 </html>

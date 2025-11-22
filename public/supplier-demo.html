@@ -75,47 +75,57 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
+              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">
                 Crontal
               </h1>
-              <span class="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50">
+              <span class="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50" data-i18n="badge.supplier">
                 Supplier portal
               </span>
             </div>
-            <p class="text-xs md:text-sm text-slate-500 mt-1">
+            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
               You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.
             </p>
           </div>
         </div>
-        <button id="supplier-tour-btn"
-                class="self-start md:self-auto inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-          <span>Guide me through this</span>
-        </button>
+
+        <div class="flex items-center gap-3 self-start md:self-auto">
+          <select id="lang-select-supplier"
+                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">简体中文</option>
+          </select>
+
+          <button id="supplier-tour-btn"
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+            <span data-i18n="btn.guide">Guide me through this</span>
+          </button>
+        </div>
       </div>
 
       <!-- 3-step journey -->
       <div id="supplier-journey"
-           class="mt-1 inline-flex flex-wrap items-center gap-2 bg-white/80 border border-slate-200 rounded-2xl px-3 py-2 shadow-sm text-[11px]">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide">Flow</span>
+           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
+        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
         <button type="button"
                 id="supplier-step-1"
                 class="journey-step journey-step-active">
           <span class="text-slate-400">1</span>
-          <span>Review RFQ</span>
+          <span data-i18n="flow.step1">Review RFQ</span>
         </button>
         <span class="text-slate-300">›</span>
         <button type="button"
                 id="supplier-step-2"
                 class="journey-step journey-step-inactive">
           <span class="text-slate-400">2</span>
-          <span>Fill pricing & terms</span>
+          <span data-i18n="flow.step2">Fill pricing & terms</span>
         </button>
         <span class="text-slate-300">›</span>
         <button type="button"
                 id="supplier-step-3"
                 class="journey-step journey-step-inactive">
           <span class="text-slate-400">3</span>
-          <span>Submit quote</span>
+          <span data-i18n="flow.step3">Submit quote</span>
         </button>
       </div>
     </header>
@@ -125,30 +135,30 @@
       <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm flex flex-col">
         <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>
-            <h2 class="text-sm font-semibold tracking-tight text-slate-900">
+            <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.rfq.title">
               Buyer RFQ details
             </h2>
-            <p class="text-[11px] text-slate-500 mt-1">
+            <p class="text-[11px] text-slate-500 mt-1" data-i18n="section.rfq.subtitle">
               Review the buyer’s request carefully before entering your prices and commercial terms.
             </p>
           </div>
           <div class="text-right text-[11px] text-slate-500">
-            <p class="uppercase tracking-wide text-slate-400">RFQ ID</p>
+            <p class="uppercase tracking-wide text-slate-400" data-i18n="section.rfq.rfqIdLabel">RFQ ID</p>
             <p id="rfq-id-label" class="mt-0.5 font-medium text-slate-900">–</p>
           </div>
         </div>
 
-        <div id="rfq-error" class="text-[11px] text-red-500 hidden mt-2">
+        <div id="rfq-error" class="text-[11px] text-red-500 hidden mt-2" data-i18n="section.rfq.error">
           Unable to load RFQ. Please confirm that you opened the link from the buyer.
         </div>
 
-        <div id="rfq-empty" class="text-[11px] text-slate-500 mt-2">
+        <div id="rfq-empty" class="text-[11px] text-slate-500 mt-2" data-i18n="section.rfq.loading">
           Looking for RFQ details…
         </div>
 
         <div id="rfq-block" class="hidden space-y-3 mt-2">
           <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1">
+            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1" data-i18n="section.rfq.summaryLabel">
               Summary
             </p>
             <p id="rfq-summary" class="text-xs text-slate-800"></p>
@@ -156,19 +166,19 @@
 
           <div class="grid gap-3 md:grid-cols-3">
             <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.destination">
                 Destination
               </p>
               <p id="rfq-destination" class="mt-1 text-xs text-slate-800">–</p>
             </div>
             <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.incoterm">
                 Incoterm
               </p>
               <p id="rfq-incoterm" class="mt-1 text-xs text-slate-800">–</p>
             </div>
             <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400">
+              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.payment">
                 Payment terms
               </p>
               <p id="rfq-payment" class="mt-1 text-xs text-slate-800">–</p>
@@ -176,20 +186,20 @@
           </div>
 
           <div>
-            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1">
+            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1" data-i18n="section.rfq.lineHeader">
               Line items
             </p>
             <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-x-auto max-h-72 overflow-y-auto">
               <table class="min-w-full text-[11px] text-slate-800">
                 <thead class="bg-slate-100 text-slate-500 sticky top-0">
                   <tr>
-                    <th class="px-3 py-2 text-left font-normal">Line</th>
-                    <th class="px-3 py-2 text-left font-normal">Description</th>
-                    <th class="px-3 py-2 text-left font-normal">Grade</th>
-                    <th class="px-3 py-2 text-left font-normal">Size</th>
-                    <th class="px-3 py-2 text-left font-normal">Qty</th>
-                    <th class="px-3 py-2 text-left font-normal">UoM</th>
-                    <th class="px-3 py-2 text-left font-normal">Unit price</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.line">Line</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.description">Description</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.grade">Grade</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.size">Size</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.qty">Qty</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.uom">UoM</th>
+                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.unitPrice">Unit price</th>
                   </tr>
                 </thead>
                 <tbody id="items-body" class="divide-y divide-slate-200"></tbody>
@@ -203,10 +213,10 @@
       <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
         <div class="pb-2 border-b border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <p class="uppercase tracking-wide text-[11px] text-slate-400">
+            <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="section.meta.stepLabel">
               Step 2 · Your company and terms
             </p>
-            <p class="mt-1 text-[11px] text-slate-500">
+            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.meta.subtitle">
               Tell the buyer who you are and how you will supply this material.
             </p>
           </div>
@@ -214,15 +224,16 @@
 
         <div class="grid gap-3 md:grid-cols-2">
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.supplierName.label">
               Supplier name
             </label>
             <input id="supplier-name-input" type="text"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.supplierName.placeholder"
                    placeholder="Example: Mill A · East Asia" />
           </div>
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.currency.label">
               Currency
             </label>
             <select id="supplier-currency-input"
@@ -236,65 +247,72 @@
 
         <div class="grid gap-3 md:grid-cols-2">
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.email.label">
               Contact email
             </label>
             <input id="supplier-email-input" type="email"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.email.placeholder"
                    placeholder="sales@mill.com" />
           </div>
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.phone.label">
               Contact phone
             </label>
             <input id="supplier-phone-input" type="tel"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.phone.placeholder"
                    placeholder="+1 555 123 4567" />
           </div>
         </div>
 
         <div class="grid gap-3 md:grid-cols-3">
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.leadtime.label">
               Lead time (days)
             </label>
             <input id="supplier-leadtime-input" type="number"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.leadtime.placeholder"
                    placeholder="e.g. 30" />
           </div>
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.payment.label">
               Payment terms
             </label>
             <input id="supplier-payment-input" type="text"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.payment.placeholder"
                    placeholder="e.g. Net 30" />
           </div>
           <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400">
+            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.validity.label">
               Quote validity (days)
             </label>
             <input id="supplier-validity-input" type="number"
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
+                   data-i18n-placeholder="meta.validity.placeholder"
                    placeholder="e.g. 15" />
           </div>
         </div>
 
         <div>
-          <label class="uppercase tracking-wide text-[11px] text-slate-400">
+          <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.notes.label">
             Notes / conditions
           </label>
           <textarea id="supplier-notes-input"
                     class="mt-1 h-20 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
+                    data-i18n-placeholder="meta.notes.placeholder"
                     placeholder="Enter any special conditions, MOQ, packaging, freight assumptions, or exclusions."></textarea>
         </div>
 
         <div class="flex items-center justify-between gap-2 mt-2">
-          <p id="supplier-total-preview" class="text-[11px] text-slate-500">
+          <p id="supplier-total-preview" class="text-[11px] text-slate-500" data-i18n="meta.total.empty">
             No active request.
           </p>
           <button id="supplier-submit-btn"
-                  class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
+                  class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
+                  data-i18n="btn.submitQuote">
             Submit quote to buyer (demo)
           </button>
         </div>
@@ -330,6 +348,214 @@
 
     let currentRequest = null;
     let supplierUnitPrices = [];
+
+    // ---------- i18n for supplier ----------
+    const I18N_SUPPLIER = {
+      en: {
+        "app.brand": "Crontal",
+        "badge.supplier": "Supplier portal",
+        "app.subtitle": "You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.",
+
+        "flow.label": "Flow",
+        "flow.step1": "Review RFQ",
+        "flow.step2": "Fill pricing & terms",
+        "flow.step3": "Submit quote",
+
+        "btn.guide": "Guide me through this",
+        "btn.submitQuote": "Submit quote to buyer (demo)",
+
+        "section.rfq.title": "Buyer RFQ details",
+        "section.rfq.subtitle": "Review the buyer’s request carefully before entering your prices and commercial terms.",
+        "section.rfq.rfqIdLabel": "RFQ ID",
+        "section.rfq.error": "Unable to load RFQ. Please confirm that you opened the link from the buyer.",
+        "section.rfq.loading": "Looking for RFQ details…",
+        "section.rfq.summaryLabel": "Summary",
+        "section.rfq.lineHeader": "Line items",
+
+        "rfq.destination": "Destination",
+        "rfq.incoterm": "Incoterm",
+        "rfq.payment": "Payment terms",
+
+        "table.line": "Line",
+        "table.description": "Description",
+        "table.grade": "Grade",
+        "table.size": "Size",
+        "table.qty": "Qty",
+        "table.uom": "UoM",
+        "table.unitPrice": "Unit price",
+
+        "section.meta.stepLabel": "Step 2 · Your company and terms",
+        "section.meta.subtitle": "Tell the buyer who you are and how you will supply this material.",
+
+        "meta.supplierName.label": "Supplier name",
+        "meta.supplierName.placeholder": "Example: Mill A · East Asia",
+        "meta.currency.label": "Currency",
+
+        "meta.email.label": "Contact email",
+        "meta.email.placeholder": "sales@mill.com",
+        "meta.phone.label": "Contact phone",
+        "meta.phone.placeholder": "+1 555 123 4567",
+
+        "meta.leadtime.label": "Lead time (days)",
+        "meta.leadtime.placeholder": "e.g. 30",
+        "meta.payment.label": "Payment terms",
+        "meta.payment.placeholder": "e.g. Net 30",
+        "meta.validity.label": "Quote validity (days)",
+        "meta.validity.placeholder": "e.g. 15",
+
+        "meta.notes.label": "Notes / conditions",
+        "meta.notes.placeholder": "Enter any special conditions, MOQ, packaging, freight assumptions, or exclusions.",
+        "meta.total.empty": "No active request."
+      },
+      es: {
+        "app.brand": "Crontal",
+        "badge.supplier": "Portal de proveedores",
+        "app.subtitle": "Estás respondiendo al RFQ de un cliente. Revisa la solicitud, introduce tus precios y condiciones y envía tu oferta.",
+
+        "flow.label": "Flujo",
+        "flow.step1": "Revisar RFQ",
+        "flow.step2": "Completar precios y condiciones",
+        "flow.step3": "Enviar oferta",
+
+        "btn.guide": "Guíame paso a paso",
+        "btn.submitQuote": "Enviar oferta al comprador (demo)",
+
+        "section.rfq.title": "Detalles del RFQ del comprador",
+        "section.rfq.subtitle": "Revisa la solicitud del comprador antes de introducir tus precios y condiciones comerciales.",
+        "section.rfq.rfqIdLabel": "ID del RFQ",
+        "section.rfq.error": "No se pudo cargar el RFQ. Verifica que abriste el enlace enviado por el comprador.",
+        "section.rfq.loading": "Buscando detalles del RFQ…",
+        "section.rfq.summaryLabel": "Resumen",
+        "section.rfq.lineHeader": "Partidas",
+
+        "rfq.destination": "Destino",
+        "rfq.incoterm": "Incoterm",
+        "rfq.payment": "Condiciones de pago",
+
+        "table.line": "Línea",
+        "table.description": "Descripción",
+        "table.grade": "Calidad",
+        "table.size": "Medida",
+        "table.qty": "Cant.",
+        "table.uom": "Unidad",
+        "table.unitPrice": "Precio unitario",
+
+        "section.meta.stepLabel": "Paso 2 · Tu empresa y condiciones",
+        "section.meta.subtitle": "Indica quién eres y en qué condiciones vas a suministrar este material.",
+
+        "meta.supplierName.label": "Nombre del proveedor",
+        "meta.supplierName.placeholder": "Ejemplo: Acería A · Asia Oriental",
+        "meta.currency.label": "Moneda",
+
+        "meta.email.label": "Correo de contacto",
+        "meta.email.placeholder": "ventas@proveedor.com",
+        "meta.phone.label": "Teléfono de contacto",
+        "meta.phone.placeholder": "+34 600 000 000",
+
+        "meta.leadtime.label": "Plazo de entrega (días)",
+        "meta.leadtime.placeholder": "p. ej. 30",
+        "meta.payment.label": "Condiciones de pago",
+        "meta.payment.placeholder": "p. ej. 30 días fecha factura",
+        "meta.validity.label": "Validez de la oferta (días)",
+        "meta.validity.placeholder": "p. ej. 15",
+
+        "meta.notes.label": "Notas / condiciones",
+        "meta.notes.placeholder": "Incluye condiciones especiales, MOQ, embalaje, transporte, exclusiones, etc.",
+        "meta.total.empty": "No hay ninguna solicitud activa."
+      },
+      zh: {
+        "app.brand": "Crontal",
+        "badge.supplier": "供应商门户",
+        "app.subtitle": "你正在回复买方的询价单。请先查看需求，再填写报价和商务条款，然后提交报价。",
+
+        "flow.label": "流程",
+        "flow.step1": "查看询价信息",
+        "flow.step2": "填写价格和条款",
+        "flow.step3": "提交报价",
+
+        "btn.guide": "引导我一步步操作",
+        "btn.submitQuote": "提交报价给买方（演示）",
+
+        "section.rfq.title": "买方 RFQ 详情",
+        "section.rfq.subtitle": "在填写价格和商务条款之前，请仔细确认买方的需求信息。",
+        "section.rfq.rfqIdLabel": "询价单编号",
+        "section.rfq.error": "无法加载询价单，请确认你是通过买方提供的链接打开此页面。",
+        "section.rfq.loading": "正在加载询价详情……",
+        "section.rfq.summaryLabel": "概要",
+        "section.rfq.lineHeader": "物料行",
+
+        "rfq.destination": "目的地",
+        "rfq.incoterm": "贸易条款",
+        "rfq.payment": "付款条件",
+
+        "table.line": "行号",
+        "table.description": "描述",
+        "table.grade": "材质",
+        "table.size": "规格",
+        "table.qty": "数量",
+        "table.uom": "单位",
+        "table.unitPrice": "单价",
+
+        "section.meta.stepLabel": "步骤二 · 供应商信息与商务条款",
+        "section.meta.subtitle": "向买方说明你是谁，以及在什么条件下供货。",
+
+        "meta.supplierName.label": "供应商名称",
+        "meta.supplierName.placeholder": "示例：某某钢厂 · 东亚",
+        "meta.currency.label": "币种",
+
+        "meta.email.label": "联系邮箱",
+        "meta.email.placeholder": "sales@mill.com",
+        "meta.phone.label": "联系电话",
+        "meta.phone.placeholder": "+86 21 1234 5678",
+
+        "meta.leadtime.label": "交货期（天）",
+        "meta.leadtime.placeholder": "如：30",
+        "meta.payment.label": "付款条件",
+        "meta.payment.placeholder": "如：货到 30 天内付款",
+        "meta.validity.label": "报价有效期（天）",
+        "meta.validity.placeholder": "如：15",
+
+        "meta.notes.label": "备注 / 条件说明",
+        "meta.notes.placeholder": "在此说明特殊条件、起订量、包装、运费假设或不包含的项目等。",
+        "meta.total.empty": "当前没有已加载的询价单。"
+      }
+    };
+
+    let currentLangSupplier = "en";
+
+    function tSupplier(key) {
+      return I18N_SUPPLIER[currentLangSupplier]?.[key] ||
+             I18N_SUPPLIER.en[key] ||
+             key;
+    }
+
+    function applySupplierLanguage(lang) {
+      currentLangSupplier = lang;
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.dataset.i18n;
+        el.textContent = tSupplier(key);
+      });
+
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        const key = el.dataset.i18nPlaceholder;
+        el.placeholder = tSupplier(key);
+      });
+
+      // Also update dynamic labels that start with default text
+      const totalEl = $("supplier-total-preview");
+      if (totalEl && totalEl.textContent === I18N_SUPPLIER.en["meta.total.empty"]) {
+        totalEl.textContent = tSupplier("meta.total.empty");
+      }
+      const emptyEl = $("rfq-empty");
+      if (emptyEl && emptyEl.textContent === I18N_SUPPLIER.en["section.rfq.loading"]) {
+        emptyEl.textContent = tSupplier("section.rfq.loading");
+      }
+      const errorEl = $("rfq-error");
+      if (errorEl && !errorEl.classList.contains("hidden")) {
+        errorEl.textContent = tSupplier("section.rfq.error");
+      }
+    }
 
     function setSupplierJourneyStep(step) {
       const s1 = $("supplier-step-1");
@@ -463,14 +689,14 @@
       const label = $("supplier-total-preview");
       if (!label) return;
       if (!currentRequest) {
-        label.textContent = "No active request.";
+        label.textContent = tSupplier("meta.total.empty");
         setSupplierJourneyStep(1);
         return;
       }
       const { hasPrice, total } = computeSupplierTotal();
       const currency = $("supplier-currency-input")?.value || "USD";
       if (!hasPrice) {
-        label.textContent = "Fill in unit prices to see the estimated total value.";
+        label.textContent = tSupplier("meta.total.empty"); // neutral message until prices entered
         setSupplierJourneyStep(2);
         return;
       }
@@ -635,7 +861,7 @@
       const errorEl = $("rfq-error");
 
       if (!rfqId) {
-        emptyEl.textContent = "Missing RFQ ID in link. Please contact the buyer.";
+        emptyEl.textContent = tSupplier("section.rfq.error");
         return;
       }
 
@@ -644,6 +870,7 @@
         if (!res.ok) {
           emptyEl.classList.add("hidden");
           errorEl.classList.remove("hidden");
+          errorEl.textContent = tSupplier("section.rfq.error");
           return;
         }
         const data = await res.json();
@@ -653,6 +880,7 @@
         console.error("Failed to load RFQ:", err);
         emptyEl.classList.add("hidden");
         errorEl.classList.remove("hidden");
+        errorEl.textContent = tSupplier("section.rfq.error");
       }
     }
 
@@ -733,6 +961,13 @@
 
     window.addEventListener("load", () => {
       setSupplierJourneyStep(1);
+      applySupplierLanguage("en");
+      const langSelect = $("lang-select-supplier");
+      if (langSelect) {
+        langSelect.addEventListener("change", (e) => {
+          applySupplierLanguage(e.target.value);
+        });
+      }
       initFromUrl();
     });
   </script>
