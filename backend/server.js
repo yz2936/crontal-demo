@@ -402,7 +402,8 @@ Extract line_items and commercial terms.
 // /api/buyer/clarify
 // ---------------------------
 app.post("/api/buyer/clarify", async (req, res) => {
-  const { rfq, history, user_message } = req.body || {};
+  const { rfq, history, user_message, lang } = req.body || {};
+  const language = lang || "en";
 
   if (!rfq) {
     return res.status(400).json({ error: "Missing rfq in request body" });
@@ -418,8 +419,16 @@ app.post("/api/buyer/clarify", async (req, res) => {
     return res.json({ assistant_message: msg });
   }
 
+  const LANGUAGE_PROMPT = {
+    en: "Respond in English.",
+    es: "Responde en español claro y profesional.",
+    zh: "请使用简体中文回答，保持专业和简洁。"
+  };
   const systemPrompt = `
-You are Crontal's RFQ conversation assistant for industrial stainless steel / metal procurement.
+  
+  ${LANGUAGE_PROMPT[language] || LANGUAGE_PROMPT.en}
+
+  You are Crontal's RFQ conversation assistant for industrial stainless steel / metal procurement.
 
 Goal:
 - Help the buyer refine a structured RFQ (already parsed) through short, concrete messages.
