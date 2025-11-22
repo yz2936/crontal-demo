@@ -3,15 +3,20 @@
 // Crontal RFQ backend with:
 // - /api/buyer/parse-request
 // - /api/buyer/clarify
-// - /api/buyer/upload-specs (PDF/Excel -> structured RFQ, no OCR dependency)
+// - /api/buyer/upload-specs (PDF/Excel -> structured RFQ, with or without AI)
 // - /api/buyer/negotiate
+// - /api/rfqs/:id, /api/rfqs/:id/quotes
 // - static serving from /public
 //
-// Run:
-//   npm install express cors multer xlsx openai
+// Run (with AI):
+//   npm install express cors multer xlsx openai dotenv
 //   export OPENAI_API_KEY="your-key"
 //   node server.js
-
+//
+// Run (without AI):
+//   npm install express cors multer xlsx dotenv
+//   node server.js
+//   (fallback parsers will be used)
 
 const express = require("express");
 const cors    = require("cors");
@@ -21,11 +26,10 @@ const fs      = require("fs");
 const path    = require("path");
 const OpenAI  = require("openai");
 
-
-// 👇 NEW: load env vars from backend/.env
+// 👇 Load env vars from backend/.env if present
 require("dotenv").config({
   path: path.join(__dirname, ".env"),
-  override: true,          // 👈 force .env to overwrite existing env vars
+  override: true,
 });
 
 // Multer for file uploads
@@ -37,12 +41,8 @@ const upload = multer({
   }
 });
 
-console.log(
-  "Loaded OPENAI_API_KEY prefix:",
-  (process.env.OPENAI_API_KEY || "").slice(0, 8) + "..."
-);
-
-const rfqStore = {};   // { [rfq_id]: rfqObject }
+// In-memory stores
+const rfqStore   = {}; // { [rfq_id]: rfqObject }
 const quoteStore = {}; // { [rfq_id]: [quote, ...] }
 
 // ---------------------------
@@ -52,21 +52,63 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
-if (!process.env.OPENAI_API_KEY) {
+// ---------------------------
+// OpenAI client (optional)
+// ---------------------------
+let client = null;
+if (process.env.OPENAI_API_KEY) {
+  client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  console.log("OpenAI client initialized (API key present).");
+} else {
   console.warn(
-    "WARNING: OPENAI_API_KEY is not set. All AI endpoints will fail until you provide it."
+    "WARNING: OPENAI_API_KEY is not set. Falling back to simple, non-AI parsing for RFQ endpoints."
   );
+}
+
+// ---------------------------
+// Helper: naive parser for fallback mode
+// ---------------------------
+
+/**
+ * Very simple parser: turn messy text into line_items, one per non-empty line.
+ * This is used when OpenAI is not available or as a last-resort fallback.
+ */
+function naiveLineItemsFromText(text) {
+  const lines = String(text || "")
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  return lines.map((line, idx) => ({
+    item_id: `L${idx + 1}`,
+    raw_description: line,
+    product_category: null,
+    product_type: null,
+    material_grade: null,
+    standard_or_spec: null,
+    size: {
+      outer_diameter: { value: null, unit: null },
+      wall_thickness: { value: null, unit: null },
+      length:        { value: null, unit: null }
+    },
+    quantity: null,
+    unit: null,
+    delivery_location: null,
+    required_delivery_date: null,
+    incoterm: null,
+    payment_terms: null,
+    other_requirements: []
+  }));
 }
 
 // ---------------------------
 // Helper: safely call chat model and return text
 // ---------------------------
 async function callChatModel(messages, model = "gpt-4o-mini") {
-  // Wrap model call and defensively extract text content
+  if (!client) {
+    throw new Error("OpenAI client is not configured (no API key).");
+  }
+
   const completion = await client.chat.completions.create({
     model,
     messages
@@ -113,13 +155,12 @@ async function extractTextFromFile(file) {
     return `EXCEL FILE: ${file.originalname}\n${allSheetsText}`;
   }
 
-  // 2) PDF – treat bytes as text; this is not perfect but avoids OCR complexity
+  // 2) PDF – treat bytes as text (best-effort; not true OCR)
   if (ext === "pdf") {
     try {
       const buf = fs.readFileSync(filePath);
       let text = buf.toString("utf8");
 
-      // If utf8 looks totally empty, at least emit a marker
       if (!text || !text.trim()) {
         console.warn(
           `No clear text extracted from PDF ${file.originalname}. Likely scanned or mostly graphical.`
@@ -157,6 +198,14 @@ async function extractTextFromFile(file) {
 // Helper: OpenAI spec → line_items
 // ---------------------------
 async function parseSpecsToLineItems(combinedText, project_name = null) {
+  if (!client) {
+    // Fallback: naive parsing (no AI)
+    return {
+      project_name: project_name || "Untitled RFQ",
+      line_items: naiveLineItemsFromText(combinedText)
+    };
+  }
+
   const MAX_CHARS = 12000;
   const truncated =
     combinedText.length > MAX_CHARS
@@ -218,7 +267,6 @@ TEXT STARTS:
 """${truncated}"""
 `;
 
-  // Use the defensive helper and parse JSON output reliably
   const messages = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt }
@@ -228,7 +276,7 @@ TEXT STARTS:
   try {
     return JSON.parse(content);
   } catch (err) {
-    // Surface raw model output for debugging if JSON parsing fails
+    console.error("Failed to parse JSON from model output:", err);
     const e = new Error("Failed to parse JSON from model output: " + (err.message || err));
     e.raw = content;
     throw e;
@@ -241,6 +289,21 @@ TEXT STARTS:
 app.post("/api/buyer/parse-request", async (req, res) => {
   const { text, project_name } = req.body || {};
   if (!text) return res.status(400).json({ error: "Missing text" });
+
+  // If no OpenAI, use simple line splitter
+  if (!client) {
+    const rfqId = "RFQ-" + Date.now();
+    const lineItems = naiveLineItemsFromText(text);
+
+    const rfq = {
+      rfq_id: rfqId,
+      project_name: project_name || "Untitled RFQ",
+      line_items: lineItems,
+      original_text: text
+    };
+    rfqStore[rfqId] = rfq;
+    return res.json(rfq);
+  }
 
   const systemPrompt = `
 You turn messy natural-language procurement text into a structured RFQ JSON object
@@ -325,7 +388,6 @@ Extract line_items and commercial terms.
       original_text: text
     };
 
-    // 🔹 Save RFQ so suppliers can load it later
     rfqStore[rfqId] = rfq;
 
     res.json(rfq);
@@ -344,6 +406,16 @@ app.post("/api/buyer/clarify", async (req, res) => {
 
   if (!rfq) {
     return res.status(400).json({ error: "Missing rfq in request body" });
+  }
+
+  // Fallback when no AI: just echo a helpful stub
+  if (!client) {
+    const rfqId = rfq.id || rfq.rfq_id || "RFQ";
+    const msg =
+      `I’ve captured your RFQ (${rfqId}). ` +
+      `Please confirm destination, Incoterm, payment terms, and any required delivery dates for all items. ` +
+      `You can update those fields directly in the table.`;
+    return res.json({ assistant_message: msg });
   }
 
   const systemPrompt = `
@@ -442,83 +514,78 @@ Style:
 // ---------------------------
 // /api/buyer/upload-specs
 // ---------------------------
-app.post(
-  "/api/buyer/upload-specs",
-  upload.array("files"),
-  async (req, res) => {
-    const files = req.files || [];
-    const { project_name } = req.body || {};
+app.post("/api/buyer/upload-specs", upload.array("files"), async (req, res) => {
+  const files = req.files || [];
+  const { project_name } = req.body || {};
 
-    if (!files.length) {
-      return res.status(400).json({ error: "No files uploaded." });
-    }
+  if (!files.length) {
+    return res.status(400).json({ error: "No files uploaded." });
+  }
 
-    try {
-      const texts = [];
+  try {
+    const texts = [];
 
-      for (const file of files) {
+    for (const file of files) {
+      try {
+        const text = await extractTextFromFile(file);
+        if (text && text.trim()) {
+          texts.push(text);
+        }
+      } catch (err) {
+        console.error(`Failed to extract from ${file.originalname}:`, err);
+      } finally {
         try {
-          const text = await extractTextFromFile(file);
-          if (text && text.trim()) {
-            texts.push(text);
-          }
-        } catch (err) {
-          console.error(`Failed to extract from ${file.originalname}:`, err);
-        } finally {
-          try {
-            fs.unlinkSync(file.path);
-          } catch {
-            // ignore
-          }
+          fs.unlinkSync(file.path);
+        } catch {
+          // ignore
         }
       }
-
-      if (!texts.length) {
-        console.warn("upload-specs: no text extracted from any file.");
-        // Fallback: still send something to the model instead of 400
-        const fallbackText = files
-          .map(
-            (f) =>
-              `FILE: ${
-                f.originalname
-              } (no readable content extracted; likely scanned or unsupported format)`
-          )
-          .join("\n");
-        texts.push(fallbackText);
-      }
-
-      const combinedText = texts.join(
-        "\n\n----- FILE SEPARATOR -----\n\n"
-      );
-
-      const parsed = await parseSpecsToLineItems(combinedText, project_name);
-      const finalProjectName =
-        parsed.project_name || project_name || "Untitled RFQ";
-      const lineItems = Array.isArray(parsed.line_items)
-        ? parsed.line_items
-        : [];
-
-      const rfqId = "RFQ-" + Date.now();
-      const rfq = {
-        rfq_id: rfqId,
-        project_name: finalProjectName,
-        line_items: lineItems,
-        original_text: combinedText
-      };
-
-      rfqStore[rfqId] = rfq;
-
-      return res.json(rfq);
-
-    } catch (err) {
-      console.error("upload-specs failed:", err);
-      return res.status(500).json({
-        error: "Parsing failed",
-        detail: err.message || String(err)
-      });
     }
+
+    if (!texts.length) {
+      console.warn("upload-specs: no text extracted from any file.");
+      const fallbackText = files
+        .map(
+          (f) =>
+            `FILE: ${
+              f.originalname
+            } (no readable content extracted; likely scanned or unsupported format)`
+        )
+        .join("\n");
+      texts.push(fallbackText);
+    }
+
+    const combinedText = texts.join(
+      "\n\n----- FILE SEPARATOR -----\n\n"
+    );
+
+    const parsed = await parseSpecsToLineItems(combinedText, project_name);
+    const finalProjectName =
+      parsed.project_name || project_name || "Untitled RFQ";
+    const lineItems = Array.isArray(parsed.line_items)
+      ? parsed.line_items
+      : [];
+
+    const rfqId = "RFQ-" + Date.now();
+    const rfq = {
+      rfq_id: rfqId,
+      project_name: finalProjectName,
+      line_items: lineItems,
+      original_text: combinedText
+    };
+
+    rfqStore[rfqId] = rfq;
+
+    return res.json(rfq);
+
+  } catch (err) {
+    console.error("upload-specs failed:", err);
+    return res.status(500).json({
+      error: "Parsing failed",
+      detail: err.message || String(err)
+    });
   }
-);
+});
 
 // ---------------------------
 // /api/buyer/negotiate
@@ -528,6 +595,14 @@ app.post("/api/buyer/negotiate", async (req, res) => {
 
   if (!rfq || !quote) {
     return res.status(400).json({ error: "Missing rfq or quote in request body" });
+  }
+
+  if (!client) {
+    const fallback =
+      "OpenAI is not configured, so I cannot generate a detailed negotiation strategy. " +
+      "As a starting point, you can ask for improved price, shorter lead time, or more favorable payment terms " +
+      "based on your priorities, and reference competing quotes if available.";
+    return res.json({ advice: fallback });
   }
 
   const systemPrompt = `
@@ -588,7 +663,11 @@ Return plain text (no JSON).
   }
 });
 
-// 🔹 Fetch RFQ by ID (supplier portal & buyer reload)
+// ---------------------------
+// RFQ + quotes for buyer/supplier flows
+// ---------------------------
+
+// Supplier / buyer: fetch RFQ by ID
 app.get("/api/rfqs/:id", (req, res) => {
   const id = req.params.id;
   const rfq = rfqStore[id];
@@ -598,7 +677,7 @@ app.get("/api/rfqs/:id", (req, res) => {
   res.json(rfq);
 });
 
-// 🔹 Supplier submits a quote for a given RFQ
+// Supplier: submit a quote for a given RFQ
 app.post("/api/rfqs/:id/quotes", (req, res) => {
   const id = req.params.id;
   const rfq = rfqStore[id];
@@ -617,13 +696,12 @@ app.post("/api/rfqs/:id/quotes", (req, res) => {
   res.json({ ok: true });
 });
 
-// 🔹 Buyer fetches all quotes for an RFQ
+// Buyer: fetch all quotes for an RFQ
 app.get("/api/rfqs/:id/quotes", (req, res) => {
   const id = req.params.id;
   const quotes = quoteStore[id] || [];
   res.json({ quotes });
 });
-
 
 // ---------------------------
 // Static frontend
@@ -633,8 +711,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "buyer-demo.html"));
 });
-
-
 
 // ---------------------------
 // Start server
