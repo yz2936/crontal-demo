@@ -81,36 +81,98 @@
       0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
       40% { transform: translateY(-2px); opacity: 1; }
     }
+
+    .journey-step {
+      border-radius: 999px;
+      border-width: 1px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.675rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      white-space: nowrap;
+    }
+    .journey-step-active {
+      background-color: rgba(90,123,170,0.12);
+      border-color: rgba(90,123,170,0.6);
+      color: #1e293b;
+      font-weight: 600;
+    }
+    .journey-step-inactive {
+      background-color: #f9fafb;
+      border-color: #e5e7eb;
+      color: #6b7280;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body class="min-h-screen">
   <div class="max-w-6xl mx-auto px-4 py-8 md:py-10">
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-          <span class="text-accent font-semibold text-lg">C</span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">Crontal</h1>
-            <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white">
-              Buyer RFQ demo
-            </span>
+    <header class="flex flex-col gap-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
+            <span class="text-accent font-semibold text-lg">C</span>
           </div>
-          <p class="text-xs md:text-sm text-slate-500 mt-1">
-            Chat with Crontal to turn your RFQ into a structured table and supplier quotes.
-          </p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">Crontal</h1>
+              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white">
+                Buyer RFQ
+              </span>
+            </div>
+            <p class="text-xs md:text-sm text-slate-500 mt-1">
+              Turn informal descriptions and specs into a structured RFQ you can share with suppliers.
+            </p>
+          </div>
         </div>
+        <button id="buyer-tour-btn"
+                class="self-start md:self-auto inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+          <span>Guide me through this</span>
+        </button>
       </div>
-      <!-- Buyer guided tour button -->
-      <button id="buyer-tour-btn"
-              class="self-start md:self-auto inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-        <span>Guide me through this</span>
-      </button>
+
+      <!-- 3-step journey strip -->
+      <div id="buyer-journey"
+           class="mt-1 inline-flex flex-wrap items-center gap-2 bg-white/80 border border-slate-200 rounded-2xl px-3 py-2 shadow-sm text-[11px]">
+        <span class="text-slate-400 mr-1 uppercase tracking-wide">Flow</span>
+        <button type="button"
+                id="buyer-step-1"
+                class="journey-step journey-step-active">
+          <span class="text-slate-400">1</span>
+          <span>Describe & upload</span>
+        </button>
+        <span class="text-slate-300">›</span>
+        <button type="button"
+                id="buyer-step-2"
+                class="journey-step journey-step-inactive">
+          <span class="text-slate-400">2</span>
+          <span>Review & share RFQ</span>
+        </button>
+        <span class="text-slate-300">›</span>
+        <button type="button"
+                id="buyer-step-3"
+                class="journey-step journey-step-inactive">
+          <span class="text-slate-400">3</span>
+          <span>Compare quotes & award</span>
+        </button>
+      </div>
     </header>
 
-    <main class="mt-8 grid gap-6 md:grid-cols-2">
-      <!-- Left: chat + share -->
+    <!-- Column labels -->
+    <div class="mt-6 grid gap-6 md:grid-cols-2 text-[11px] text-slate-500">
+      <div class="md:pr-4">
+        <p class="uppercase tracking-wide mb-1">Build request</p>
+        <p>Describe what you need and upload specs. Crontal will draft the RFQ for you.</p>
+      </div>
+      <div class="md:pl-4">
+        <p class="uppercase tracking-wide mb-1">Review & decide</p>
+        <p>Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.</p>
+      </div>
+    </div>
+
+    <main class="mt-4 grid gap-6 md:grid-cols-2">
+      <!-- Left: chat + file upload + award tools -->
       <section class="space-y-4">
         <!-- File upload -->
         <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col text-xs">
@@ -151,10 +213,10 @@
           <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
               <h2 class="text-sm font-semibold tracking-tight text-slate-900">
-                Buyer · RFQ conversation
+                Describe what you need
               </h2>
               <p class="mt-1 text-xs text-slate-500">
-                Chat with Crontal. It will parse your description into the table on the right and help you refine it.
+                Use plain language. Crontal will turn this into a structured RFQ on the right.
               </p>
             </div>
           </div>
@@ -167,7 +229,7 @@
             <div class="mt-2 flex items-center gap-2">
               <input id="chat-input" type="text"
                      class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent"
-                     placeholder="Describe what you need, or reply to Crontal..." />
+                     placeholder="Example: 20 pcs 304L tubes, 2'' OD, 6m, CIF Houston, Net 30..." />
               <button id="chat-send-btn"
                       class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition">
                 Send
@@ -176,67 +238,39 @@
           </div>
         </div>
 
-        <!-- Share link + award email -->
+        <!-- Award email -->
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
-          <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center justify-between gap-2 mb-2">
             <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-500">Share with suppliers</p>
-              <p class="text-slate-700" id="share-link-label">
-                Start a conversation to get a structured request and link you can send to suppliers.
+              <p class="text-[11px] uppercase tracking-wide text-slate-500">
+                Step 3 · Award email & PDF
+              </p>
+              <p class="text-[11px] text-slate-500">
+                Once you’ve picked a supplier, draft the award email and export the full RFQ as a PDF.
               </p>
             </div>
+            <button id="generate-rfp-btn"
+                    class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition">
+              Generate award email
+            </button>
           </div>
-
-          <div id="share-link-block" class="mt-2 hidden">
-            <label class="text-[11px] uppercase tracking-wide text-slate-500">
-              Request link
-            </label>
-            <div class="mt-1 flex items-center gap-2">
-              <input id="share-link-input" type="text" readonly
-                     class="flex-1 rounded-xl px-3 py-1.5 text-[11px] text-slate-700 font-mono" />
-              <button id="copy-link-btn"
-                      class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-                Copy
-              </button>
-            </div>
-            <p class="mt-1 text-[11px] text-slate-500">
-              Your supplier will open this link and see the structured request in their portal.
-            </p>
-          </div>
-
-          <div class="mt-4 pt-4 border-t border-slate-200">
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <div>
-                <p class="text-[11px] uppercase tracking-wide text-slate-500">
-                  Award email to selected supplier
-                </p>
-                <p class="text-[11px] text-slate-500">
-                  This email will announce the award and reference the attached PDF document.
-                </p>
-              </div>
-              <button id="generate-rfp-btn"
-                      class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition">
-                Generate award email
-              </button>
-            </div>
-            <textarea id="rfp-output"
-                      class="mt-2 h-48 md:h-56 w-full rounded-xl px-3 py-2 text-xs md:text-[13px] leading-relaxed bg-slate-950/40 border border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
-                      placeholder="Award email will appear here after you click “Generate award email”."></textarea>
-          </div>
+          <textarea id="rfp-output"
+                    class="mt-2 h-48 md:h-56 w-full rounded-xl px-3 py-2 text-xs md:text-[13px] leading-relaxed bg-slate-950/40 border border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
+                    placeholder="Award email will appear here after you click “Generate award email”."></textarea>
         </div>
       </section>
 
-      <!-- Right: structured request + supplier responses -->
+      <!-- Right: structured request + share link + supplier responses -->
       <section class="space-y-4">
         <!-- Structured request -->
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div>
               <h3 class="text-sm font-semibold text-slate-900">
-                Structured product request
+                Step 2 · RFQ summary for suppliers
               </h3>
               <p class="mt-1 text-xs text-slate-500">
-                Parsed from your conversation (via backend). You can still edit fields below.
+                This is what suppliers will see when you share the request link. Edit any field before sending.
               </p>
             </div>
             <div class="text-right text-xs">
@@ -246,7 +280,7 @@
           </div>
 
           <div id="buyer-request-empty" class="text-[11px] text-slate-500">
-            No conversation yet. Start chatting on the left to generate a structured request.
+            No RFQ yet. Start by describing what you need or uploading files on the left.
           </div>
 
           <div id="buyer-request-block" class="hidden space-y-3">
@@ -297,57 +331,89 @@
           </div>
         </div>
 
-        <!-- Supplier responses -->
-        <div class="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <h3 class="text-sm font-semibold text-slate-900">
-              Supplier responses
-            </h3>
-            <p class="mt-1 text-xs text-slate-500">
-              Ranked based on your selected priority.
+        <!-- Share link -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-[11px] uppercase tracking-wide text-slate-500">Step 2 · Share request link</p>
+              <p class="text-slate-700" id="share-link-label">
+                Once your RFQ looks right, share this link with suppliers so they can respond.
+              </p>
+            </div>
+          </div>
+
+          <div id="share-link-block" class="mt-2 hidden">
+            <label class="text-[11px] uppercase tracking-wide text-slate-500">
+              Request link
+            </label>
+            <div class="mt-1 flex items-center gap-2">
+              <input id="share-link-input" type="text" readonly
+                     class="flex-1 rounded-xl px-3 py-1.5 text-[11px] text-slate-700 font-mono" />
+              <button id="copy-link-btn"
+                      class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+                Copy
+              </button>
+            </div>
+            <p class="mt-1 text-[11px] text-slate-500">
+              Send this link by email or chat. Suppliers will see your RFQ in their Crontal portal.
             </p>
           </div>
-          <div class="flex flex-col items-end gap-1">
-            <div class="flex items-center gap-2 text-xs">
-              <div class="text-right">
-                <p class="text-[11px] uppercase tracking-wide text-slate-500">Count</p>
-                <p id="quotes-count" class="mt-0.5 text-slate-700 font-medium">0</p>
-              </div>
-              <button id="refresh-quotes-btn"
-                      class="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:border-accent/60 hover:text-accent transition">
-                Refresh
-              </button>
+        </div>
+
+        <!-- Supplier responses -->
+        <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Step 3 · Supplier responses
+              </h3>
+              <p class="mt-1 text-xs text-slate-500">
+                As suppliers respond, their offers will appear here and be ranked based on your selected priority.
+              </p>
             </div>
-            <div class="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] gap-1 mt-1">
-              <span class="text-slate-500 mr-1">Rank by:</span>
-              <button id="priority-pricing"
-                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 priority-active">
-                Pricing
-              </button>
-              <button id="priority-delivery"
-                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
-                Delivery
-              </button>
-              <button id="priority-payment"
-                      class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
-                Payment terms
-              </button>
+            <div class="flex flex-col items-end gap-1">
+              <div class="flex items-center gap-2 text-xs">
+                <div class="text-right">
+                  <p class="text-[11px] uppercase tracking-wide text-slate-500">Count</p>
+                  <p id="quotes-count" class="mt-0.5 text-slate-700 font-medium">0</p>
+                </div>
+                <button id="refresh-quotes-btn"
+                        class="rounded-full border border-slate-300 bg-slate-50 px-2.5 py-0.5 text-[11px] text-slate-600 hover:border-accent/60 hover:text-accent hover:bg-accent/5 transition">
+                  Refresh
+                </button>
+              </div>
+              <div class="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[10px] gap-1 mt-1">
+                <span class="text-slate-500 mr-1">Rank by:</span>
+                <button id="priority-pricing"
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-700 priority-active">
+                  Pricing
+                </button>
+                <button id="priority-delivery"
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                  Delivery
+                </button>
+                <button id="priority-payment"
+                        class="px-2 py-0.5 rounded-full border border-transparent text-slate-600 hover:text-accent hover:border-accent/40">
+                  Payment terms
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div id="quotes-empty" class="text-[11px] text-slate-500">
-          No supplier quotes yet. Share the link above so suppliers can submit a quote.
+          <div class="mt-2 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+            <div id="quotes-empty" class="text-[11px] text-slate-500">
+              No supplier quotes yet. Share the request link above, then click Refresh.
+            </div>
+            <div id="quotes-list" class="hidden mt-1 space-y-2"></div>
+          </div>
         </div>
-
-        <div id="quotes-list" class="hidden space-y-2"></div>
       </section>
     </main>
   </div>
 
   <!-- PDF PREVIEW MODAL -->
   <div id="pdf-modal"
-       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
+       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
     <div class="max-w-2xl w-[90%] bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-400/40 p-4 md:p-5 flex flex-col max-h-[80vh]">
       <div class="flex items-center justify-between gap-3 mb-2">
         <div>
@@ -377,11 +443,11 @@
     </div>
   </div>
 
-  <!-- Walkthrough overlay (shared pattern for buyer & supplier) -->
+  <!-- Walkthrough overlay -->
   <div id="walkthrough-overlay"
-      class="fixed inset-0 bg-black/40 hidden">
+       class="fixed inset-0 bg-black/40 hidden">
     <div id="walkthrough-box"
-        class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
+         class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
       <p id="walkthrough-text" class="text-slate-800"></p>
       <div class="mt-3 flex justify-between items-center gap-2">
         <button id="walkthrough-skip"
@@ -400,10 +466,9 @@
     </div>
   </div>
 
-
   <script>
-    const PARSE_URL   = "/api/buyer/parse-request";
-    const CLARIFY_URL = "/api/buyer/clarify";
+    const PARSE_URL        = "/api/buyer/parse-request";
+    const CLARIFY_URL      = "/api/buyer/clarify";
     const UPLOAD_SPECS_URL = "/api/buyer/upload-specs";
 
     let currentRequest     = null;
@@ -413,10 +478,22 @@
     let lastRfpDraft       = "";
     let lastRfpQuote       = null;
     let isThinking         = false;
-    let supplierPriority   = "pricing"; // "pricing" | "delivery" | "payment"
+    let supplierPriority   = "pricing";
 
     const { jsPDF } = window.jspdf || {};
     const $ = id => document.getElementById(id);
+
+    function setBuyerJourneyStep(step) {
+      const s1 = $("buyer-step-1");
+      const s2 = $("buyer-step-2");
+      const s3 = $("buyer-step-3");
+      [s1, s2, s3].forEach((el, idx) => {
+        if (!el) return;
+        const n = idx + 1;
+        el.classList.remove("journey-step-active", "journey-step-inactive");
+        el.classList.add(n === step ? "journey-step-active" : "journey-step-inactive");
+      });
+    }
 
     function mapBackendToCurrentRequest(data, rawText) {
       const rfqId     = data.rfq_id || ("RFQ-" + Date.now());
@@ -507,6 +584,7 @@
         empty.classList.remove("hidden");
         block.classList.add("hidden");
         idLabel.textContent = "None yet";
+        setBuyerJourneyStep(1);
         return;
       }
 
@@ -560,6 +638,7 @@
 
       renderShareLink();
       loadQuotesFromBackend();
+      setBuyerJourneyStep(2);
     }
 
     function renderShareLink() {
@@ -571,14 +650,14 @@
       if (!currentRequest) {
         block.classList.add("hidden");
         label.textContent =
-          "Start a conversation to get a structured request and link you can send to suppliers.";
+          "Once your RFQ looks right, share this link with suppliers so they can respond.";
         input.value = "";
         return;
       }
 
       block.classList.remove("hidden");
       label.textContent =
-        "Share this link with suppliers so they can view and submit quotes against this request.";
+        "Share this link with suppliers so they can view this RFQ and submit quotes in their portal.";
 
       currentRequest.id = currentRequest.id || currentRequest.rfq_id || ("RFQ-" + Date.now());
       const rfqId = currentRequest.id;
@@ -659,6 +738,7 @@
         emptyEl.classList.remove("hidden");
         listEl.classList.add("hidden");
         listEl.innerHTML = "";
+        setBuyerJourneyStep(currentRequest ? 2 : 1);
         return;
       }
 
@@ -723,6 +803,8 @@
         `;
         listEl.appendChild(card);
       });
+
+      setBuyerJourneyStep(3);
     }
 
     async function loadQuotesFromBackend() {
@@ -809,7 +891,6 @@
       const formData = new FormData();
       Array.from(fileInput.files).forEach(file => formData.append("files", file));
 
-      const statusEl = $("file-upload-status");
       const btn = $("file-upload-btn");
       btn.disabled = true;
       isThinking = true;
@@ -875,6 +956,7 @@
       content: "Hi! I’m Crontal’s RFQ assistant. Tell me what you’d like to buy (sizes, grades, quantities, delivery location, payment terms), and I’ll turn it into a structured table on the right that you can edit."
     });
     renderChat();
+    setBuyerJourneyStep(1);
 
     $("chat-send-btn").addEventListener("click", async () => {
       const input = $("chat-input");
@@ -890,7 +972,9 @@
       try {
         if (!currentRequest) {
           const ok = await parseInitial(text);
-          if (ok) await callClarifyAPI(text);
+          if (ok) {
+            await callClarifyAPI(text);
+          }
         } else {
           await reparseWithAdditionalText(text);
           await callClarifyAPI(text);
@@ -942,7 +1026,7 @@
       catch { alert("Unable to copy automatically. Please copy manually."); }
     });
 
-    const refreshBtn = document.getElementById("refresh-quotes-btn");
+    const refreshBtn = $("refresh-quotes-btn");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", () => {
         loadQuotesFromBackend();
@@ -978,7 +1062,6 @@
         const quoteItems = supplier.items || [];
         const currency = supplier.currency || "USD";
 
-        // ---------- HEADER ----------
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         doc.text("Request for Proposal (RFP)", left, y);
@@ -991,7 +1074,6 @@
         doc.text(`Buyer: [Your company name here]`, left, y); y += 14;
         doc.text(`Selected supplier: ${supplier.supplierName || "N/A"}`, left, y); y += 20;
 
-        // ---------- COMMERCIAL TERMS ----------
         doc.setFont("helvetica", "bold");
         doc.text("Commercial terms", left, y); y += 14;
         doc.setFont("helvetica", "normal");
@@ -1025,7 +1107,6 @@
           y += 8;
         }
 
-        // ---------- LINE ITEM TABLE ----------
         const tableBody = items.map((item, idx) => {
           const qi = quoteItems[idx] || {};
           const unitPrice =
@@ -1073,7 +1154,6 @@
 
           y = doc.lastAutoTable.finalY + 16;
         } else {
-          // Fallback: simple text if autoTable missing
           doc.setFont("helvetica", "bold");
           doc.text("Line items", left, y); y += 14;
           doc.setFont("helvetica", "normal");
@@ -1089,7 +1169,6 @@
           y += 16;
         }
 
-        // ---------- TOTAL SUMMARY ----------
         doc.setFont("helvetica", "bold");
         const totalText =
           typeof supplier.total === "number"
@@ -1100,7 +1179,6 @@
             : "N/A";
         doc.text(`Estimated total value: ${totalText}`, left, y); y += 20;
 
-        // ---------- NARRATIVE (award email) ----------
         if (lastRfpDraft) {
           doc.setFont("helvetica", "bold");
           doc.text("Narrative RFP details", left, y); y += 14;
@@ -1114,7 +1192,6 @@
           y += 16;
         }
 
-        // ---------- SIGNATURES ----------
         if (y > 700) { doc.addPage(); y = 60; }
         doc.setFont("helvetica", "bold");
         doc.text("Signatures", left, y); y += 14;
@@ -1133,13 +1210,11 @@
       });
     }
 
-    // Modal close handler
     const pdfModal = $("pdf-modal");
     const pdfModalClose = $("pdf-modal-close");
     if (pdfModal && pdfModalClose) {
       pdfModalClose.addEventListener("click", () => {
         pdfModal.classList.add("hidden");
-        pdfModal.classList.remove("flex");
       });
     }
 
@@ -1173,7 +1248,7 @@
 
       if (!currentRequest) {
         output.value =
-          "Please finalize a structured request and select at least one supplier quote before generating the award email.";
+          "Please finalize a structured request and have at least one supplier quote before generating the award email.";
         return;
       }
 
@@ -1254,15 +1329,16 @@ Best regards,
       const modal = $("pdf-modal");
       if (modal) {
         modal.classList.remove("hidden");
-        modal.classList.add("flex");
       }
+
+      setBuyerJourneyStep(3);
     });
 
     // ---------- Generic walkthrough engine ----------
     const walkthroughState = {
       steps: [],
       index: 0,
-      role: null // "buyer" | "supplier"
+      role: null
     };
 
     function clearHighlight() {
@@ -1276,14 +1352,12 @@ Best regards,
       const box = $("walkthrough-box");
       if (!overlay || !box || !target) return;
 
-      // Make sure overlay is visible so box has real size
       overlay.classList.remove("hidden");
 
       const rect = target.getBoundingClientRect();
       const padding = 12;
       const boxWidth = box.offsetWidth;
 
-      // Position relative to viewport (overlay is fixed)
       let top = rect.bottom + padding;
       let left = rect.left;
 
@@ -1291,20 +1365,18 @@ Best regards,
       if (left > maxLeft) left = maxLeft;
       if (left < 8) left = 8;
 
-      // If box would go off the bottom of the screen, put it above the target
       const bottomY = top + box.offsetHeight;
       const viewportBottom = window.innerHeight;
       if (bottomY > viewportBottom - 16) {
         top = rect.top - box.offsetHeight - padding;
         if (top < 8) {
-          top = 16; // clamp near top
+          top = 16;
         }
       }
 
       box.style.top = `${top}px`;
       box.style.left = `${left}px`;
     }
-
 
     function showWalkthroughStep() {
       const overlay = $("walkthrough-overlay");
@@ -1345,7 +1417,6 @@ Best regards,
       showWalkthroughStep();
     }
 
-    // Controls
     const wtNext = $("walkthrough-next");
     const wtSkip = $("walkthrough-skip");
     if (wtNext) {
@@ -1363,36 +1434,38 @@ Best regards,
     }
 
     window.addEventListener("resize", () => {
-      if ($("walkthrough-overlay") && !$("walkthrough-overlay").classList.contains("hidden")) {
-        showWalkthroughStep();
+      const overlay = $("walkthrough-overlay");
+      if (overlay && !overlay.classList.contains("hidden") && walkthroughState.steps.length) {
+        const step = walkthroughState.steps[walkthroughState.index];
+        const target = document.querySelector(step.selector);
+        if (target) positionWalkthroughBox(target);
       }
     });
 
-    // ---------- Buyer walkthrough configuration ----------
     const buyerTourSteps = [
       {
         selector: "#chat-window",
-        text: "Start here: describe what you need in natural language. I'll turn it into structured line items on the right."
+        text: "Step 1 – Start by describing what you need in plain language. I’ll use this to draft the RFQ."
       },
       {
         selector: "#buyer-items-body",
-        text: "Review the generated line items. You can edit descriptions, grades, quantities, and sizes directly in this table."
+        text: "Review and edit the line items Crontal generated from your description. Adjust descriptions, grades, quantities, and sizes."
       },
       {
         selector: "#buyer-destination",
-        text: "Confirm destination, incoterm, and payment terms. Suppliers see these when responding."
+        text: "Confirm destination, Incoterm, and payment terms so suppliers know how to price freight and payment risk."
       },
       {
         selector: "#share-link-block",
-        text: "When you're ready, share this request link with suppliers so they can submit quotes via their portal."
+        text: "Once your RFQ looks right, share this request link with suppliers so they can respond via their portal."
       },
       {
         selector: "#quotes-list",
-        text: "Supplier quotes appear here. Use the ranking toggle to sort by pricing, delivery timeline, or payment terms."
+        text: "As suppliers respond, their quotes appear here. Use the rank controls to focus on price, delivery, or payment terms."
       },
       {
         selector: "#generate-rfp-btn",
-        text: "Once you've picked a supplier, click here to generate an award email and then export the full RFQ as a PDF."
+        text: "When you’re ready to award, generate the award email and export the full RFQ package as a PDF."
       }
     ];
 
@@ -1402,7 +1475,6 @@ Best regards,
         startWalkthrough("buyer", buyerTourSteps);
       });
     }
-
   </script>
 </body>
 </html>
