@@ -106,85 +106,68 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50">
+<body class="min-h-screen">
   <div class="max-w-6xl mx-auto px-4 py-8 md:py-10">
-
-    <!-- HEADER -->
     <header class="flex flex-col gap-4">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <!-- Left: Brand + Title -->
         <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center shadow-sm">
+          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
             <span class="text-accent font-semibold text-lg">C</span>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
-                Crontal
-              </h1>
-              <span
-                class="inline-flex items-center rounded-full border border-accent/60 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent bg-accent/10 font-semibold">
-                买方门户
+              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">Crontal</h1>
+              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white" data-i18n="badge.buyer">
+                Buyer RFQ
               </span>
             </div>
-            <p class="text-xs md:text-sm text-slate-600 mt-1" data-i18n="app.subtitle">
-              <!-- default fallback text -->
+            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
               Turn informal descriptions and specs into a structured RFQ you can share with suppliers.
             </p>
-
           </div>
         </div>
 
-        <!-- Right: Language + Guide Button -->
         <div class="flex items-center gap-3 self-start md:self-auto">
           <select id="lang-select-buyer"
-                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-700 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent shadow-xs">
+                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="zh">简体中文</option>
           </select>
 
           <button id="buyer-tour-btn"
-                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-700 hover:border-accent hover:text-accent hover:bg-accent/5 transition shadow-xs">
-            <span>Guide me through this</span>
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
+            <span data-i18n="btn.guide">Guide me through this</span>
           </button>
         </div>
       </div>
+
+      <!-- Flow strip -->
+      <div id="buyer-journey"
+           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
+        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
+        <button type="button"
+                id="buyer-step-1"
+                class="journey-step journey-step-active">
+          <span class="text-slate-400">1</span>
+          <span data-i18n="flow.step1">Describe & upload</span>
+        </button>
+        <span class="text-slate-300">›</span>
+        <button type="button"
+                id="buyer-step-2"
+                class="journey-step journey-step-inactive">
+          <span class="text-slate-400">2</span>
+          <span data-i18n="flow.step2">Review & share RFQ</span>
+        </button>
+        <span class="text-slate-300">›</span>
+        <button type="button"
+                id="buyer-step-3"
+                class="journey-step journey-step-inactive">
+          <span class="text-slate-400">3</span>
+          <span data-i18n="flow.step3">Compare quotes & award</span>
+        </button>
+      </div>
     </header>
-
-    <!-- FLOW BAR (STICKY + MORE VISUAL WEIGHT) -->
-    <div id="buyer-journey"
-         class="sticky top-0 z-40 mt-4 inline-flex flex-wrap items-center gap-2 bg-gradient-to-r from-accent/10 via-white to-white backdrop-blur-xl border border-accent/30 rounded-2xl px-4 py-2.5 text-[11px] shadow-md">
-      <span class="text-accent mr-2 uppercase tracking-wide font-semibold">Flow</span>
-
-      <!-- Step 1 – inactive -->
-      <button type="button" id="buyer-step-1"
-              class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white/70 px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent/40 hover:text-accent transition">
-        <span class="text-slate-400">1</span>
-        <span>Describe & upload</span>
-      </button>
-
-      <span class="text-slate-300">›</span>
-
-      <!-- Step 2 – active -->
-      <button type="button" id="buyer-step-2"
-              class="inline-flex items-center gap-1 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] text-white font-medium shadow-sm">
-        <span class="opacity-90">2</span>
-        <span>Review & share RFQ</span>
-      </button>
-
-      <span class="text-slate-300">›</span>
-
-      <!-- Step 3 – inactive -->
-      <button type="button" id="buyer-step-3"
-              class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white/70 px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent/40 hover:text-accent transition">
-        <span class="text-slate-400">3</span>
-        <span>Compare quotes & award</span>
-      </button>
-    </div>
-
-    <!-- Your main content continues below -->
-    
 
     <!-- Column labels -->
     <div class="mt-6 grid gap-6 md:grid-cols-2 text-[11px] text-slate-500">
@@ -199,7 +182,7 @@
     </div>
 
     <main class="mt-4 grid gap-6 md:grid-cols-2">
-      <!-- Left: chat + file upload + award tools -->
+      <!-- Left column -->
       <section class="space-y-4">
         <!-- File upload -->
         <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col text-xs">
@@ -292,9 +275,9 @@
         </div>
       </section>
 
-      <!-- Right: structured request + share link + supplier responses -->
+      <!-- Right column -->
       <section class="space-y-4">
-        <!-- Structured request -->
+        <!-- RFQ summary -->
         <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div>
@@ -525,7 +508,7 @@
     const { jsPDF } = window.jspdf || {};
     const $ = id => document.getElementById(id);
 
-    // ---------- i18n for buyer ----------
+    // ---------- i18n dictionary ----------
     const I18N_BUYER = {
       en: {
         "app.brand": "Crontal",
@@ -780,6 +763,12 @@
         const key = el.dataset.i18nPlaceholder;
         el.placeholder = tBuyer(key);
       });
+
+      // dynamic empty texts
+      const emptyRFQ = $("buyer-request-empty");
+      if (emptyRFQ) emptyRFQ.textContent = tBuyer("section.rfq.empty");
+      const quotesEmpty = $("quotes-empty");
+      if (quotesEmpty) quotesEmpty.textContent = tBuyer("section.quotes.empty");
     }
 
     function setBuyerJourneyStep(step) {
@@ -1247,7 +1236,7 @@
         "text-[11px] " + (isError ? "text-red-500" : "text-slate-500");
     }
 
-    // Chat seeding (still English for now)
+    // Seed chat (still in English – can later make this language-aware via tBuyer)
     clarifyMessages.push({
       role: "assistant",
       content: "Hi! I’m Crontal’s RFQ assistant. Tell me what you’d like to buy (sizes, grades, quantities, delivery location, payment terms), and I’ll turn it into a structured table on the right that you can edit."
@@ -1269,9 +1258,7 @@
       try {
         if (!currentRequest) {
           const ok = await parseInitial(text);
-          if (ok) {
-            await callClarifyAPI(text);
-          }
+          if (ok) await callClarifyAPI(text);
         } else {
           await reparseWithAdditionalText(text);
           await callClarifyAPI(text);
@@ -1355,7 +1342,7 @@
         const supplier = lastRfpQuote;
         const c        = currentRequest.commercial || {};
         const items    = currentRequest.items || [];
-        const quoteItems = supplier.items || {};
+        const quoteItems = supplier.items || [];
         const currency = supplier.currency || "USD";
 
         doc.setFont("helvetica", "bold");
@@ -1499,9 +1486,7 @@
         doc.save(filename);
 
         const modal = $("pdf-modal");
-        if (modal) {
-          modal.classList.add("hidden");
-        }
+        if (modal) modal.classList.add("hidden");
       });
     }
 
@@ -1531,7 +1516,7 @@
 
     if (priorityButtons.pricing)  priorityButtons.pricing.addEventListener("click",  () => setPriority("pricing"));
     if (priorityButtons.delivery) priorityButtons.delivery.addEventListener("click", () => setPriority("delivery"));
-    if (priorityButtons.payment)  priorityButtons.payment.addEventListener("click",  () => setPriority("payment"));
+    if (priorityButtons.payment)  priorityButtons.payment.addEventListener("click", () => setPriority("payment"));
     setPriority("pricing");
 
     $("generate-rfp-btn").addEventListener("click", () => {
@@ -1617,19 +1602,15 @@ Best regards,
       output.value = awardEmail;
 
       const previewEl = $("pdf-preview-text");
-      if (previewEl) {
-        previewEl.textContent = awardEmail;
-      }
+      if (previewEl) previewEl.textContent = awardEmail;
 
       const modal = $("pdf-modal");
-      if (modal) {
-        modal.classList.remove("hidden");
-      }
+      if (modal) modal.classList.remove("hidden");
 
       setBuyerJourneyStep(3);
     });
 
-    // ---------- Generic walkthrough engine ----------
+    // Walkthrough engine
     const walkthroughState = {
       steps: [],
       index: 0,
@@ -1771,14 +1752,13 @@ Best regards,
       });
     }
 
-    // Language selector hookup
+    // Language selector
     const langSelectBuyer = $("lang-select-buyer");
     if (langSelectBuyer) {
       langSelectBuyer.addEventListener("change", (e) => {
         applyBuyerLanguage(e.target.value);
       });
     }
-    // Apply default language
     applyBuyerLanguage("en");
   </script>
 </body>
