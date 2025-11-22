@@ -110,23 +110,32 @@
   <div class="max-w-6xl mx-auto px-4 py-8 md:py-10">
     <header class="flex flex-col gap-4">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+        <!-- Left: Brand + Title -->
         <div class="flex items-center gap-3">
           <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-            <span class="text-accent font-semibold text-lg" data-i18n="app.title">C</span>
+            <span class="text-accent font-semibold text-lg">C</span>
           </div>
+
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">Crontal</h1>
-              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white" data-i18n="badge.buyer">
-                Buyer RFQ
+              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-800">
+                Crontal
+              </h1>
+
+              <span
+                class="inline-flex items-center rounded-full border border-accent/50 px-2 py-0.5 text-[11px] uppercase tracking-wide text-accent bg-accent/10 font-medium">
+                买方门户
               </span>
             </div>
-            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
-              Turn informal descriptions and specs into a structured RFQ you can share with suppliers.
+
+            <p class="text-xs md:text-sm text-slate-600 mt-1">
+              把零散的描述和图纸信息整理成结构化的询价单，方便统一发送给供应商。
             </p>
           </div>
         </div>
 
+        <!-- Right: Language + Guide Button -->
         <div class="flex items-center gap-3 self-start md:self-auto">
           <select id="lang-select-buyer"
                   class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
@@ -137,34 +146,33 @@
 
           <button id="buyer-tour-btn"
                   class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-            <span data-i18n="btn.guide">Guide me through this</span>
+            <span>Guide me through this</span>
           </button>
         </div>
       </div>
 
-      <!-- 3-step journey strip -->
+      <!-- Journey Bar -->
       <div id="buyer-journey"
-           class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
-        <button type="button"
-                id="buyer-step-1"
-                class="journey-step journey-step-active">
-          <span class="text-slate-400">1</span>
-          <span data-i18n="flow.step1">Describe & upload</span>
+          class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/70 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
+        <span class="text-slate-400 mr-1 uppercase tracking-wide">Flow</span>
+
+        <button type="button" id="buyer-step-1" class="journey-step journey-step-active text-accent">
+          <span class="text-accent font-semibold">1</span>
+          <span>Describe & upload</span>
         </button>
+
         <span class="text-slate-300">›</span>
-        <button type="button"
-                id="buyer-step-2"
-                class="journey-step journey-step-inactive">
+
+        <button type="button" id="buyer-step-2" class="journey-step journey-step-inactive">
           <span class="text-slate-400">2</span>
-          <span data-i18n="flow.step2">Review & share RFQ</span>
+          <span>Review & share RFQ</span>
         </button>
+
         <span class="text-slate-300">›</span>
-        <button type="button"
-                id="buyer-step-3"
-                class="journey-step journey-step-inactive">
+
+        <button type="button" id="buyer-step-3" class="journey-step journey-step-inactive">
           <span class="text-slate-400">3</span>
-          <span data-i18n="flow.step3">Compare quotes & award</span>
+          <span>Compare quotes & award</span>
         </button>
       </div>
     </header>
