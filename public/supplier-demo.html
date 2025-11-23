@@ -1,999 +1,227 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Crontal · Supplier Quote Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crontal · Supplier Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      theme: {
-        extend: {
-          colors: { accent: '#5a7baa' }
-        }
-      }
+      theme: { extend: { colors: { accent: '#5a7baa' } } }
     }
   </script>
-  <style>
-    #walkthrough-overlay {
-      z-index: 60;
-    }
-
-    .tour-highlight {
-      position: relative;
-      z-index: 61;
-      box-shadow: 0 0 0 2px #5a7baa, 0 0 0 6px rgba(90, 123, 170, 0.25);
-      border-radius: 0.75rem;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at top left, #dde8ff 0, #f4f6fc 45%, #ffffff 100%);
-      color: #0f172a;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .rounded-2xl.border.bg-white {
-      background-color: #ffffff;
-      border-color: #e2e8f0;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-    }
-    #supplier-total-preview {
-      font-style: italic;
-    }
-
-    .journey-step {
-      border-radius: 999px;
-      border-width: 1px;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.675rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      white-space: nowrap;
-    }
-    .journey-step-active {
-      background-color: rgba(90,123,170,0.12);
-      border-color: rgba(90,123,170,0.6);
-      color: #1e293b;
-      font-weight: 600;
-    }
-    .journey-step-inactive {
-      background-color: #f9fafb;
-      border-color: #e5e7eb;
-      color: #6b7280;
-      font-weight: 500;
-    }
-  </style>
 </head>
-<body class="min-h-screen">
-  <div class="max-w-5xl mx-auto px-4 py-6 md:py-10 space-y-6">
-    <header class="flex flex-col gap-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-            <span class="text-accent font-semibold text-lg">C</span>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">
-                Crontal
-              </h1>
-              <span class="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50" data-i18n="badge.supplier">
-                Supplier portal
-              </span>
+<body class="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white bg-fixed text-slate-900">
+
+  <div id="loading" class="min-h-screen flex items-center justify-center text-slate-400 text-sm">Loading RFQ...</div>
+
+  <div id="main-content" class="hidden min-h-screen py-12 px-4">
+    <div class="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
+                    <span class="text-accent font-bold text-xl">C</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900">Crontal</h1>
+                    <span class="text-xs text-slate-500 uppercase tracking-wider">Supplier Portal</span>
+                </div>
             </div>
-            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
-              You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.
-            </p>
-          </div>
         </div>
 
-        <div class="flex items-center gap-3 self-start md:self-auto">
-          <select id="lang-select-supplier"
-                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="zh">简体中文</option>
-          </select>
-
-          <button id="supplier-tour-btn"
-                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-            <span data-i18n="btn.guide">Guide me through this</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 3-step journey -->
-      <div id="supplier-journey"
-              class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/80 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
-        <button type="button"
-                id="supplier-step-1"
-                class="journey-step journey-step-active">
-          <span class="text-slate-400">1</span>
-          <span data-i18n="flow.step1">Review RFQ</span>
-        </button>
-        <span class="text-slate-300">›</span>
-        <button type="button"
-                id="supplier-step-2"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">2</span>
-          <span data-i18n="flow.step2">Fill pricing & terms</span>
-        </button>
-        <span class="text-slate-300">›</span>
-        <button type="button"
-                id="supplier-step-3"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">3</span>
-          <span data-i18n="flow.step3">Submit quote</span>
-        </button>
-      </div>
-    </header>
-
-    <main class="space-y-4">
-      <!-- RFQ summary + line items -->
-      <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm flex flex-col">
-        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
-          <div>
-            <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.rfq.title">
-              Buyer RFQ details
-            </h2>
-            <p class="text-[11px] text-slate-500 mt-1" data-i18n="section.rfq.subtitle">
-              Review the buyer’s request carefully before entering your prices and commercial terms.
-            </p>
-          </div>
-          <div class="text-right text-[11px] text-slate-500">
-            <p class="uppercase tracking-wide text-slate-400" data-i18n="section.rfq.rfqIdLabel">RFQ ID</p>
-            <p id="rfq-id-label" class="mt-0.5 font-medium text-slate-900">–</p>
-          </div>
-        </div>
-
-        <div id="rfq-error" class="text-[11px] text-red-500 hidden mt-2" data-i18n="section.rfq.error">
-          Unable to load RFQ. Please confirm that you opened the link from the buyer.
-        </div>
-
-        <div id="rfq-empty" class="text-[11px] text-slate-500 mt-2" data-i18n="section.rfq.loading">
-          Looking for RFQ details…
-        </div>
-
-        <div id="rfq-block" class="hidden space-y-3 mt-2">
-          <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1" data-i18n="section.rfq.summaryLabel">
-              Summary
-            </p>
-            <p id="rfq-summary" class="text-xs text-slate-800"></p>
-          </div>
-
-          <div class="grid gap-3 md:grid-cols-3">
-            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.destination">
-                Destination
-              </p>
-              <p id="rfq-destination" class="mt-1 text-xs text-slate-800">–</p>
+        <!-- RFQ Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xl shadow-slate-200/50">
+            <div class="flex flex-col md:flex-row justify-between items-start mb-6 border-b border-slate-100 pb-4 gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-semibold text-slate-900">RFQ <span id="rfq-id-display"></span></h2>
+                        <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-medium border border-blue-100">Open for Quote</span>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-1">Project: <span id="project-display"></span></p>
+                </div>
+                <div class="text-right text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p><span class="font-semibold">Dest:</span> <span id="dest-display">-</span></p>
+                    <p><span class="font-semibold">Incoterm:</span> <span id="incoterm-display">-</span></p>
+                </div>
             </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.incoterm">
-                Incoterm
-              </p>
-              <p id="rfq-incoterm" class="mt-1 text-xs text-slate-800">–</p>
+
+            <div class="overflow-x-auto rounded-lg border border-slate-100">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-50 text-slate-500 font-medium">
+                        <tr>
+                            <th class="px-4 py-3 border-r border-slate-100 w-12">Line</th>
+                            <th class="px-4 py-3">Description</th>
+                            <th class="px-4 py-3">Specs</th>
+                            <th class="px-4 py-3 w-32 bg-slate-100/50 text-center border-x border-slate-100">Size (OD x WT x L)</th>
+                            <th class="px-4 py-3 text-right">Qty</th>
+                            <th class="px-4 py-3 text-right w-32 bg-slate-50">Unit Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-body" class="divide-y divide-slate-100">
+                        <!-- Items injected here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
-              <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="rfq.payment">
-                Payment terms
-              </p>
-              <p id="rfq-payment" class="mt-1 text-xs text-slate-800">–</p>
+            
+            <div class="mt-6 flex justify-end items-center gap-4 pt-4 border-t border-slate-100">
+                <span class="text-sm text-slate-500">Total Estimate:</span>
+                <span class="text-2xl font-bold text-slate-900">
+                    <span id="currency-display">USD</span> <span id="total-display">0.00</span>
+                </span>
             </div>
-          </div>
+        </div>
 
-          <div>
-            <p class="uppercase tracking-wide text-[11px] text-slate-400 mb-1" data-i18n="section.rfq.lineHeader">
-              Line items
-            </p>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-x-auto max-h-72 overflow-y-auto">
-              <table class="min-w-full text-[11px] text-slate-800">
-                <thead class="bg-slate-100 text-slate-500 sticky top-0">
-                  <tr>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.line">Line</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.description">Description</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.grade">Grade</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.size">Size</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.qty">Qty</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.uom">UoM</th>
-                    <th class="px-3 py-2 text-left font-normal" data-i18n="table.unitPrice">Unit price</th>
-                  </tr>
-                </thead>
-                <tbody id="items-body" class="divide-y divide-slate-200"></tbody>
-              </table>
+        <!-- Commercials Form -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xl shadow-slate-200/50">
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4">Commercial Terms</h3>
+            <div class="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                    <label class="block text-slate-500 mb-1.5 text-xs font-medium">Supplier Name</label>
+                    <input id="supp-name" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-accent/10 focus:border-accent outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-500 mb-1.5 text-xs font-medium">Currency</label>
+                    <select id="supp-currency" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 bg-white focus:ring-2 focus:ring-accent/10 focus:border-accent outline-none" onchange="document.getElementById('currency-display').innerText=this.value">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="CNY">CNY</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-500 mb-1.5 text-xs font-medium">Lead Time (Days)</label>
+                    <input type="number" id="supp-leadtime" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-accent/10 focus:border-accent outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-500 mb-1.5 text-xs font-medium">Payment Terms</label>
+                    <input id="supp-payment" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-accent/10 focus:border-accent outline-none" placeholder="e.g. Net 30">
+                </div>
             </div>
-          </div>
+            <div class="mt-8 flex justify-end">
+                <button onclick="submitQuote()" id="submit-btn" class="bg-slate-900 text-white hover:bg-slate-800 px-8 py-3 rounded-xl font-medium transition shadow-lg shadow-slate-300 transform hover:-translate-y-0.5 active:translate-y-0">
+                    Submit Quote
+                </button>
+            </div>
         </div>
-      </section>
-
-      <!-- Quote meta -->
-      <section class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
-        <div class="pb-2 border-b border-slate-200 flex items-center justify-between gap-3">
-          <div>
-            <p class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="section.meta.stepLabel">
-              Step 2 · Your company and terms
-            </p>
-            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.meta.subtitle">
-              Tell the buyer who you are and how you will supply this material.
-            </p>
-          </div>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2">
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.supplierName.label">
-              Supplier name
-            </label>
-            <input id="supplier-name-input" type="text"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.supplierName.placeholder"
-                   placeholder="Example: Mill A · East Asia" />
-          </div>
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.currency.label">
-              Currency
-            </label>
-            <select id="supplier-currency-input"
-                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs">
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="CNY">CNY</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2">
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.email.label">
-              Contact email
-            </label>
-            <input id="supplier-email-input" type="email"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.email.placeholder"
-                   placeholder="sales@mill.com" />
-          </div>
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.phone.label">
-              Contact phone
-            </label>
-            <input id="supplier-phone-input" type="tel"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.phone.placeholder"
-                   placeholder="+1 555 123 4567" />
-          </div>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-3">
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.leadtime.label">
-              Lead time (days)
-            </label>
-            <input id="supplier-leadtime-input" type="number"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.leadtime.placeholder"
-                   placeholder="e.g. 30" />
-          </div>
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.payment.label">
-              Payment terms
-            </label>
-            <input id="supplier-payment-input" type="text"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.payment.placeholder"
-                   placeholder="e.g. Net 30" />
-          </div>
-          <div>
-            <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.validity.label">
-              Quote validity (days)
-            </label>
-            <input id="supplier-validity-input" type="number"
-                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs"
-                   data-i18n-placeholder="meta.validity.placeholder"
-                   placeholder="e.g. 15" />
-          </div>
-        </div>
-
-        <div>
-          <label class="uppercase tracking-wide text-[11px] text-slate-400" data-i18n="meta.notes.label">
-            Notes / conditions
-          </label>
-          <textarea id="supplier-notes-input"
-                    class="mt-1 h-20 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs"
-                    data-i18n-placeholder="meta.notes.placeholder"
-                    placeholder="Enter any special conditions, MOQ, packaging, freight assumptions, or exclusions."></textarea>
-        </div>
-
-        <div class="flex items-center justify-between gap-2 mt-2">
-          <p id="supplier-total-preview" class="text-[11px] text-slate-500" data-i18n="meta.total.empty">
-            No active request.
-          </p>
-          <button id="supplier-submit-btn"
-                  class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
-                  data-i18n="btn.submitQuote">
-            Submit quote to buyer (demo)
-          </button>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Walkthrough overlay -->
-  <div id="walkthrough-overlay"
-       class="fixed inset-0 bg-black/40 hidden">
-    <div id="walkthrough-box"
-         class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
-      <p id="walkthrough-text" class="text-slate-800"></p>
-      <div class="mt-3 flex justify-between items-center gap-2">
-        <button id="walkthrough-skip"
-                class="text-[11px] text-slate-500 hover:text-slate-700">
-          Skip walkthrough
-        </button>
-        <div class="flex items-center gap-2">
-          <span id="walkthrough-step-indicator"
-                class="text-[11px] text-slate-400"></span>
-          <button id="walkthrough-next"
-                  class="rounded-lg bg-accent text-white text-[11px] px-3 py-1.5 hover:bg-accent/90">
-            Next →
-          </button>
-        </div>
-      </div>
+        
+        <p class="text-center text-xs text-slate-400 pb-8">Powered by Crontal</p>
     </div>
   </div>
 
   <script>
-    const $ = id => document.getElementById(id);
-
-    let currentRequest = null;
-    let supplierUnitPrices = [];
-
-    // Demo-local persistence for quotes so buyer tab can observe them
-    const QUOTES_STORAGE_PREFIX = "crontal-quotes-";
-
-    // ---------- i18n for supplier ----------
-    const I18N_SUPPLIER = {
-      en: {
-        "app.brand": "Crontal",
-        "badge.supplier": "Supplier portal",
-        "app.subtitle": "You’re responding to a buyer’s RFQ. Review the request, enter your pricing and terms, and submit your quote.",
-
-        "flow.label": "Flow",
-        "flow.step1": "Review RFQ",
-        "flow.step2": "Fill pricing & terms",
-        "flow.step3": "Submit quote",
-
-        "btn.guide": "Guide me through this",
-        "btn.submitQuote": "Submit quote to buyer (demo)",
-
-        "section.rfq.title": "Buyer RFQ details",
-        "section.rfq.subtitle": "Review the buyer’s request carefully before entering your prices and commercial terms.",
-        "section.rfq.rfqIdLabel": "RFQ ID",
-        "section.rfq.error": "Unable to load RFQ. Please confirm that you opened the link from the buyer.",
-        "section.rfq.loading": "Looking for RFQ details…",
-        "section.rfq.summaryLabel": "Summary",
-        "section.rfq.lineHeader": "Line items",
-
-        "rfq.destination": "Destination",
-        "rfq.incoterm": "Incoterm",
-        "rfq.payment": "Payment terms",
-
-        "table.line": "Line",
-        "table.description": "Description",
-        "table.grade": "Grade",
-        "table.size": "Size",
-        "table.qty": "Qty",
-        "table.uom": "UoM",
-        "table.unitPrice": "Unit price",
-
-        "section.meta.stepLabel": "Step 2 · Your company and terms",
-        "section.meta.subtitle": "Tell the buyer who you are and how you will supply this material.",
-
-        "meta.supplierName.label": "Supplier name",
-        "meta.supplierName.placeholder": "Example: Mill A · East Asia",
-        "meta.currency.label": "Currency",
-
-        "meta.email.label": "Contact email",
-        "meta.email.placeholder": "sales@mill.com",
-        "meta.phone.label": "Contact phone",
-        "meta.phone.placeholder": "+1 555 123 4567",
-
-        "meta.leadtime.label": "Lead time (days)",
-        "meta.leadtime.placeholder": "e.g. 30",
-        "meta.payment.label": "Payment terms",
-        "meta.payment.placeholder": "e.g. Net 30",
-        "meta.validity.label": "Quote validity (days)",
-        "meta.validity.placeholder": "e.g. 15",
-
-        "meta.notes.label": "Notes / conditions",
-        "meta.notes.placeholder": "Enter any special conditions, MOQ, packaging, freight assumptions, or exclusions.",
-        "meta.total.empty": "No active request."
-      },
-      es: {
-        "app.brand": "Crontal",
-        "badge.supplier": "Portal de proveedores",
-        "app.subtitle": "Estás respondiendo al RFQ de un cliente. Revisa la solicitud, introduce tus precios y condiciones y envía tu oferta.",
-
-        "flow.label": "Flujo",
-        "flow.step1": "Revisar RFQ",
-        "flow.step2": "Completar precios y condiciones",
-        "flow.step3": "Enviar oferta",
-
-        "btn.guide": "Guíame paso a paso",
-        "btn.submitQuote": "Enviar oferta al comprador (demo)",
-
-        "section.rfq.title": "Detalles del RFQ del comprador",
-        "section.rfq.subtitle": "Revisa la solicitud del comprador antes de introducir tus precios y condiciones comerciales.",
-        "section.rfq.rfqIdLabel": "ID del RFQ",
-        "section.rfq.error": "No se pudo cargar el RFQ. Verifica que abriste el enlace enviado por el comprador.",
-        "section.rfq.loading": "Buscando detalles del RFQ…",
-        "section.rfq.summaryLabel": "Resumen",
-        "section.rfq.lineHeader": "Partidas",
-
-        "rfq.destination": "Destino",
-        "rfq.incoterm": "Incoterm",
-        "rfq.payment": "Condiciones de pago",
-
-        "table.line": "Línea",
-        "table.description": "Descripción",
-        "table.grade": "Calidad",
-        "table.size": "Medida",
-        "table.qty": "Cant.",
-        "table.uom": "Unidad",
-        "table.unitPrice": "Precio unitario",
-
-        "section.meta.stepLabel": "Paso 2 · Tu empresa y condiciones",
-        "section.meta.subtitle": "Indica quién eres y en qué condiciones vas a suministrar este material.",
-
-        "meta.supplierName.label": "Nombre del proveedor",
-        "meta.supplierName.placeholder": "Ejemplo: Acería A · Asia Oriental",
-        "meta.currency.label": "Moneda",
-
-        "meta.email.label": "Correo de contacto",
-        "meta.email.placeholder": "ventas@proveedor.com",
-        "meta.phone.label": "Teléfono de contacto",
-        "meta.phone.placeholder": "+34 600 000 000",
-
-        "meta.leadtime.label": "Plazo de entrega (días)",
-        "meta.leadtime.placeholder": "p. ej. 30",
-        "meta.payment.label": "Condiciones de pago",
-        "meta.payment.placeholder": "p. ej. 30 días fecha factura",
-        "meta.validity.label": "Validez de la oferta (días)",
-        "meta.validity.placeholder": "p. ej. 15",
-
-        "meta.notes.label": "Notas / condiciones",
-        "meta.notes.placeholder": "Incluye condiciones especiales, MOQ, embalaje, transporte, exclusiones, etc.",
-        "meta.total.empty": "No hay ninguna solicitud activa."
-      },
-      zh: {
-        "app.brand": "Crontal",
-        "badge.supplier": "供应商门户",
-        "app.subtitle": "你正在回复买方的询价单。请先查看需求，再填写报价和商务条款，然后提交报价。",
-
-        "flow.label": "流程",
-        "flow.step1": "查看询价信息",
-        "flow.step2": "填写价格和条款",
-        "flow.step3": "提交报价",
-
-        "btn.guide": "引导我一步步操作",
-        "btn.submitQuote": "提交报价给买方（演示）",
-
-        "section.rfq.title": "买方 RFQ 详情",
-        "section.rfq.subtitle": "在填写价格和商务条款之前，请仔细确认买方的需求信息。",
-        "section.rfq.rfqIdLabel": "询价单编号",
-        "section.rfq.error": "无法加载询价单，请确认你是通过买方提供的链接打开此页面。",
-        "section.rfq.loading": "正在加载询价详情……",
-        "section.rfq.summaryLabel": "概要",
-        "section.rfq.lineHeader": "物料行",
-
-        "rfq.destination": "目的地",
-        "rfq.incoterm": "贸易条款",
-        "rfq.payment": "付款条件",
-
-        "table.line": "行号",
-        "table.description": "描述",
-        "table.grade": "材质",
-        "table.size": "规格",
-        "table.qty": "数量",
-        "table.uom": "单位",
-        "table.unitPrice": "单价",
-
-        "section.meta.stepLabel": "步骤二 · 供应商信息与商务条款",
-        "section.meta.subtitle": "向买方说明你是谁，以及在什么条件下供货。",
-
-        "meta.supplierName.label": "供应商名称",
-        "meta.supplierName.placeholder": "示例：某某钢厂 · 东亚",
-        "meta.currency.label": "币种",
-
-        "meta.email.label": "联系邮箱",
-        "meta.email.placeholder": "sales@mill.com",
-        "meta.phone.label": "联系电话",
-        "meta.phone.placeholder": "+86 21 1234 5678",
-
-        "meta.leadtime.label": "交货期（天）",
-        "meta.leadtime.placeholder": "如：30",
-        "meta.payment.label": "付款条件",
-        "meta.payment.placeholder": "如：货到 30 天内付款",
-        "meta.validity.label": "报价有效期（天）",
-        "meta.validity.placeholder": "如：15",
-
-        "meta.notes.label": "备注 / 条件说明",
-        "meta.notes.placeholder": "在此说明特殊条件、起订量、包装、运费假设或不包含的项目等。",
-        "meta.total.empty": "当前没有已加载的询价单。"
-      }
-    };
-
-    let currentLangSupplier = "en";
-
-    function tSupplier(key) {
-      return I18N_SUPPLIER[currentLangSupplier]?.[key] ||
-             I18N_SUPPLIER.en[key] ||
-             key;
-    }
-
-    function applySupplierLanguage(lang) {
-      currentLangSupplier = lang;
-
-      document.querySelectorAll("[data-i18n]").forEach(el => {
-        const key = el.dataset.i18n;
-        el.textContent = tSupplier(key);
-      });
-
-      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
-        const key = el.dataset.i18nPlaceholder;
-        el.placeholder = tSupplier(key);
-      });
-
-      // Also update dynamic labels that start with default text
-      const totalEl = $("supplier-total-preview");
-      if (totalEl && totalEl.textContent === I18N_SUPPLIER.en["meta.total.empty"]) {
-        totalEl.textContent = tSupplier("meta.total.empty");
-      }
-      const emptyEl = $("rfq-empty");
-      if (emptyEl && emptyEl.textContent === I18N_SUPPLIER.en["section.rfq.loading"]) {
-        emptyEl.textContent = tSupplier("section.rfq.loading");
-      }
-      const errorEl = $("rfq-error");
-      if (errorEl && !errorEl.classList.contains("hidden")) {
-        errorEl.textContent = tSupplier("section.rfq.error");
-      }
-    }
-
-    function setSupplierJourneyStep(step) {
-      const s1 = $("supplier-step-1");
-      const s2 = $("supplier-step-2");
-      const s3 = $("supplier-step-3");
-      [s1, s2, s3].forEach((el, idx) => {
-        if (!el) return;
-        const n = idx + 1;
-        el.classList.remove("journey-step-active", "journey-step-inactive");
-        el.classList.add(n === step ? "journey-step-active" : "journey-step-inactive");
-      });
-    }
-
-    function mapBackendToSupplierRequest(data) {
-      const rfqId     = data.rfq_id || ("RFQ-" + Date.now());
-      const lineItems = Array.isArray(data.line_items) ? data.line_items : [];
-
-      const items = lineItems.map((li, idx) => {
-        const size = li.size || {};
-        const od   = size.outer_diameter || {};
-        const wt   = size.wall_thickness || {};
-        const len  = size.length || {};
-
-        const sizeParts = [];
-        if (od.value != null) sizeParts.push(`${od.value}${od.unit ? " " + od.unit : ""}`);
-        if (wt.value != null) sizeParts.push(`WT ${wt.value}${wt.unit ? " " + wt.unit : ""}`);
-        if (len.value != null) sizeParts.push(`${len.value}${len.unit ? " " + len.unit : ""}`);
-
-        return {
-          line: idx + 1,
-          description: li.product_type || li.raw_description || `Line ${idx + 1}`,
-          grade: li.material_grade || "",
-          quantity: li.quantity ?? null,
-          uom: li.unit || "",
-          sizeText: sizeParts.join(" · ")
-        };
-      });
-
-      const first = lineItems[0] || {};
-      const commercial = {
-        destination: first.delivery_location || "",
-        incoterm:    first.incoterm || "",
-        paymentTerm: first.payment_terms || ""
-      };
-
-      return { id: rfqId, items, commercial };
-    }
-
-    function renderRFQ() {
-      const idLabel  = $("rfq-id-label");
-      const emptyEl  = $("rfq-empty");
-      const errorEl  = $("rfq-error");
-      const blockEl  = $("rfq-block");
-      const summary  = $("rfq-summary");
-      const destEl   = $("rfq-destination");
-      const incEl    = $("rfq-incoterm");
-      const payEl    = $("rfq-payment");
-      const tbody    = $("items-body");
-
-      if (!currentRequest) {
-        idLabel.textContent = "–";
-        emptyEl.classList.remove("hidden");
-        errorEl.classList.add("hidden");
-        blockEl.classList.add("hidden");
-        setSupplierJourneyStep(1);
-        return;
-      }
-
-      emptyEl.classList.add("hidden");
-      errorEl.classList.add("hidden");
-      blockEl.classList.remove("hidden");
-
-      idLabel.textContent = currentRequest.id;
-      const first = currentRequest.items[0] || {};
-      const c = currentRequest.commercial || {};
-
-      summary.textContent =
-        (first.quantity ? first.quantity + " " + (first.uom || "") : "Quantity not detected") +
-        " of " +
-        (first.description || "stainless products") +
-        (first.grade ? " · Grade " + first.grade : "") +
-        (c.destination ? " · Deliver to " + c.destination : "") +
-        (c.incoterm ? " · " + c.incoterm : "") +
-        (c.paymentTerm ? " · " + c.paymentTerm : "");
-
-      destEl.textContent = c.destination || "–";
-      incEl.textContent  = c.incoterm || "–";
-      payEl.textContent  = c.paymentTerm || "–";
-
-      tbody.innerHTML = "";
-      supplierUnitPrices = [];
-
-      currentRequest.items.forEach((it, idx) => {
-        supplierUnitPrices.push(NaN);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="px-3 py-2">${it.line}</td>
-          <td class="px-3 py-2">${it.description || "-"}</td>
-          <td class="px-3 py-2">${it.grade || "-"}</td>
-          <td class="px-3 py-2">${it.sizeText || "-"}</td>
-          <td class="px-3 py-2">${it.quantity ?? "-"}</td>
-          <td class="px-3 py-2">${it.uom || "-"}</td>
-          <td class="px-3 py-2">
-            <input type="number" step="0.01"
-                   class="supplier-price-input w-24 rounded-lg border border-slate-300 px-2 py-1 text-[11px]"
-                   placeholder="0.00" data-index="${idx}" />
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      updateSupplierTotalPreview();
-      setSupplierJourneyStep(1);
-    }
-
-    function computeSupplierTotal() {
-      if (!currentRequest) return { hasPrice: false, total: 0 };
-      let total = 0;
-      let hasPrice = false;
-      currentRequest.items.forEach((item, idx) => {
-        const price = supplierUnitPrices[idx];
-        if (!Number.isFinite(price)) return;
-        const qty = item.quantity ?? 0;
-        total += (qty || 1) * price;
-        hasPrice = true;
-      });
-      return { hasPrice, total };
-    }
-
-    function updateSupplierTotalPreview() {
-      const label = $("supplier-total-preview");
-      if (!label) return;
-      if (!currentRequest) {
-        label.textContent = tSupplier("meta.total.empty");
-        setSupplierJourneyStep(1);
-        return;
-      }
-      const { hasPrice, total } = computeSupplierTotal();
-      const currency = $("supplier-currency-input")?.value || "USD";
-      if (!hasPrice) {
-        label.textContent = tSupplier("meta.total.empty"); // neutral message until prices entered
-        setSupplierJourneyStep(2);
-        return;
-      }
-      label.textContent =
-        "Estimated total: " +
-        currency +
-        " " +
-        total.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      setSupplierJourneyStep(2);
-    }
-
-    // Walkthrough engine
-    const walkthroughState = {
-      steps: [],
-      index: 0,
-      role: null
-    };
-
-    function clearHighlight() {
-      document.querySelectorAll(".tour-highlight").forEach(el => {
-        el.classList.remove("tour-highlight");
-      });
-    }
-
-    function positionWalkthroughBox(target) {
-      const overlay = $("walkthrough-overlay");
-      const box = $("walkthrough-box");
-      if (!overlay || !box || !target) return;
-
-      overlay.classList.remove("hidden");
-
-      const rect = target.getBoundingClientRect();
-      const padding = 12;
-      const boxWidth = box.offsetWidth;
-
-      let top = rect.bottom + padding;
-      let left = rect.left;
-
-      const maxLeft = window.innerWidth - boxWidth - 16;
-      if (left > maxLeft) left = maxLeft;
-      if (left < 8) left = 8;
-
-      const bottomY = top + box.offsetHeight;
-      const viewportBottom = window.innerHeight;
-      if (bottomY > viewportBottom - 16) {
-        top = rect.top - box.offsetHeight - padding;
-        if (top < 8) {
-          top = 16;
-        }
-      }
-
-      box.style.top = `${top}px`;
-      box.style.left = `${left}px`;
-    }
-
-    function showWalkthroughStep() {
-      const overlay = $("walkthrough-overlay");
-      const textEl = $("walkthrough-text");
-      const indicator = $("walkthrough-step-indicator");
-      if (!overlay || !textEl || !indicator) return;
-
-      clearHighlight();
-
-      const steps = walkthroughState.steps;
-      const i = walkthroughState.index;
-      if (!steps || i >= steps.length) {
-        overlay.classList.add("hidden");
-        return;
-      }
-
-      const step = steps[i];
-      const target = document.querySelector(step.selector);
-
-      if (!target) {
-        walkthroughState.index += 1;
-        showWalkthroughStep();
-        return;
-      }
-
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.classList.add("tour-highlight");
-      textEl.textContent = step.text;
-      indicator.textContent = `Step ${i + 1} of ${steps.length}`;
-
-      setTimeout(() => positionWalkthroughBox(target), 250);
-    }
-
-    function startWalkthrough(role, steps) {
-      walkthroughState.role = role;
-      walkthroughState.steps = steps;
-      walkthroughState.index = 0;
-      showWalkthroughStep();
-    }
-
-    const wtNext = $("walkthrough-next");
-    const wtSkip = $("walkthrough-skip");
-    if (wtNext) {
-      wtNext.addEventListener("click", () => {
-        walkthroughState.index += 1;
-        showWalkthroughStep();
-      });
-    }
-    if (wtSkip) {
-      wtSkip.addEventListener("click", () => {
-        const overlay = $("walkthrough-overlay");
-        if (overlay) overlay.classList.add("hidden");
-        clearHighlight();
-      });
-    }
-
-    window.addEventListener("resize", () => {
-      const overlay = $("walkthrough-overlay");
-      if (overlay && !overlay.classList.contains("hidden") && walkthroughState.steps.length) {
-        const step = walkthroughState.steps[walkthroughState.index];
-        const target = document.querySelector(step.selector);
-        if (target) positionWalkthroughBox(target);
-      }
-    });
-
-    const supplierTourSteps = [
-      {
-        selector: "#rfq-block",
-        text: "Start by reviewing the loaded RFQ: this shows quantities, grades, destination, Incoterm, and payment terms from the buyer."
-      },
-      {
-        selector: "#items-body",
-        text: "Scroll through the line items and understand the scope. Enter your unit prices in the right-most column for each line you want to quote."
-      },
-      {
-        selector: "#supplier-name-input",
-        text: "Tell the buyer who you are: add your supplier name and contact details so they know exactly which team submitted this quote."
-      },
-      {
-        selector: "#supplier-leadtime-input",
-        text: "Fill in your lead time, payment terms, and quote validity. These commercial terms matter as much as price."
-      },
-      {
-        selector: "#supplier-notes-input",
-        text: "Use notes and conditions to call out any assumptions, exclusions, MOQs, or packaging and freight details."
-      },
-      {
-        selector: "#supplier-submit-btn",
-        text: "Once everything looks right, submit your quote. The buyer will see your pricing, terms, and total value in their response view."
-      }
-    ];
-
-    const supplierTourBtn = $("supplier-tour-btn");
-    if (supplierTourBtn) {
-      supplierTourBtn.addEventListener("click", () => {
-        startWalkthrough("supplier", supplierTourSteps);
-      });
-    }
-
-    async function initFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      const rfqId  = params.get("rfq_id");
-
-      const emptyEl = $("rfq-empty");
-      const errorEl = $("rfq-error");
-
-      if (!rfqId) {
-        emptyEl.textContent = tSupplier("section.rfq.error");
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}`);
-        if (!res.ok) {
-          emptyEl.classList.add("hidden");
-          errorEl.classList.remove("hidden");
-          errorEl.textContent = tSupplier("section.rfq.error");
-          return;
-        }
-        const data = await res.json();
-        currentRequest = mapBackendToSupplierRequest(data);
-        renderRFQ();
-      } catch (err) {
-        console.error("Failed to load RFQ:", err);
-        emptyEl.classList.add("hidden");
-        errorEl.classList.remove("hidden");
-        errorEl.textContent = tSupplier("section.rfq.error");
-      }
-    }
-
-    document.addEventListener("input", e => {
-      if (!e.target.classList.contains("supplier-price-input")) return;
-      const idx = Number(e.target.getAttribute("data-index"));
-      const val = e.target.value;
-      const num = val === "" ? NaN : Number(val);
-      supplierUnitPrices[idx] = num;
-      updateSupplierTotalPreview();
-    });
-
-    $("supplier-submit-btn").addEventListener("click", async () => {
-      if (!currentRequest) {
-        alert("No active RFQ loaded. Cannot submit quote.");
-        return;
-      }
-      const btn = $("supplier-submit-btn");
-      const { hasPrice, total } = computeSupplierTotal();
-      if (!hasPrice) {
-        alert("Please enter at least one unit price before submitting your quote.");
-        return;
-      }
-      // disable to prevent double-submit
-      btn.disabled = true;
-      const origText = btn.textContent;
-      btn.textContent = "Submitting…";
-
-      const name     = $("supplier-name-input")?.value.trim() || "Unnamed supplier";
-      const currency = $("supplier-currency-input")?.value || "USD";
-      const leadTime = $("supplier-leadtime-input")?.value.trim();
-      const payment  = $("supplier-payment-input")?.value.trim() || currentRequest.commercial.paymentTerm || "";
-      const validity = $("supplier-validity-input")?.value.trim();
-      const notes    = $("supplier-notes-input")?.value.trim();
-      const email    = $("supplier-email-input")?.value.trim();
-      const phone    = $("supplier-phone-input")?.value.trim();
-
-      const items = currentRequest.items.map((item, idx) => {
-        const price = supplierUnitPrices[idx];
-        const qty   = item.quantity ?? 0;
-        const lineTotal =
-          Number.isFinite(price) && qty != null ? (qty || 1) * price : NaN;
-        return {
-          line: item.line,
-          unitPrice: Number.isFinite(price) ? price : null,
-          quantity: item.quantity,
-          lineTotal: isNaN(lineTotal) ? null : lineTotal
-        };
-      });
-
-      const quote = {
-        supplierName: name,
-        currency,
-        total,
-        items,
-        leadTime,
-        payment,
-        validity,
-        notes,
-        email,
-        phone
-      };
-
-      const rfqId = currentRequest.id;
-      try {
-        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}/quotes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(quote)
-        });
-        if (!res.ok) {
-          console.error("Submit quote error:", await res.text());
-          alert("Failed to submit quote to buyer (server error).");
-          return;
+    const SERVER_URL = "http://localhost:3000/api";
+    let rfq = null;
+    let prices = {};
+
+    window.onload = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        
+        if(!id) {
+            document.getElementById('loading').innerText = "Error: No RFQ ID provided.";
+            return;
         }
 
-        // Persist a copy in localStorage (demo) so buyer/demo or other tabs can pick it up
         try {
-          const key = QUOTES_STORAGE_PREFIX + rfqId;
-          const stored = localStorage.getItem(key);
-          const arr = stored ? JSON.parse(stored) : [];
-          arr.push(quote);
-          localStorage.setItem(key, JSON.stringify(arr));
-        } catch (err) {
-          console.warn("Could not persist quote to localStorage (demo):", err);
+            const res = await fetch(`${SERVER_URL}/rfq/${id}`);
+            if(!res.ok) throw new Error("RFQ Not found");
+            rfq = await res.json();
+            renderRfq();
+        } catch(e) {
+            document.getElementById('loading').innerText = "Error: " + e.message;
         }
+    };
 
-        alert("Quote submitted to buyer. Thank you.");
-        setSupplierJourneyStep(3);
-      } catch (err) {
-        console.error("Submit quote error:", err);
-        alert("Network error while submitting quote.");
-      } finally {
-        // re-enable button & restore label
-        btn.disabled = false;
-        btn.textContent = origText;
-      }
-    });
+    function renderRfq() {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
 
-    window.addEventListener("load", () => {
-      setSupplierJourneyStep(1);
-      applySupplierLanguage("en");
-      const langSelect = $("lang-select-supplier");
-      if (langSelect) {
-        langSelect.addEventListener("change", (e) => {
-          applySupplierLanguage(e.target.value);
+        document.getElementById('rfq-id-display').innerText = `#${rfq.rfq_id}`;
+        document.getElementById('project-display').innerText = rfq.project_name || 'N/A';
+        document.getElementById('dest-display').innerText = rfq.commercial.destination || '-';
+        document.getElementById('incoterm-display').innerText = rfq.commercial.incoterm || '-';
+
+        const tbody = document.getElementById('items-body');
+        
+        rfq.line_items.forEach((item) => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50/50";
+            
+            const sizeStr = `
+                ${item.size.outer_diameter.value || '-'} ${item.size.outer_diameter.unit || ''} x
+                ${item.size.wall_thickness.value || '-'} ${item.size.wall_thickness.unit || ''} x
+                ${item.size.length.value || '-'} ${item.size.length.unit || ''}
+            `;
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-slate-400 font-mono text-xs border-r border-slate-100">${item.line}</td>
+                <td class="px-4 py-3 font-medium text-slate-800">${item.description}</td>
+                <td class="px-4 py-3 text-slate-500 text-xs">${item.material_grade || '-'}</td>
+                <td class="px-4 py-3 text-slate-600 text-xs text-center border-x border-slate-100 font-mono">${sizeStr}</td>
+                <td class="px-4 py-3 text-right text-slate-700 font-medium">${item.quantity} ${item.uom || ''}</td>
+                <td class="px-4 py-3 text-right bg-slate-50/30">
+                    <input type="number" placeholder="0.00" 
+                        class="w-full text-right bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none shadow-sm"
+                        oninput="updatePrice(${item.line}, this.value, ${item.quantity || 0})"
+                    >
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-      }
-      initFromUrl();
-    });
+    }
+
+    window.updatePrice = (line, val, qty) => {
+        prices[line] = (parseFloat(val) || 0);
+        calculateTotal();
+    };
+
+    function calculateTotal() {
+        let total = 0;
+        rfq.line_items.forEach(item => {
+            const p = prices[item.line] || 0;
+            total += p * (item.quantity || 0);
+        });
+        document.getElementById('total-display').innerText = total.toLocaleString(undefined, {minimumFractionDigits: 2});
+    }
+
+    window.submitQuote = async () => {
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerText = "Submitting...";
+
+        const quote = {
+            rfqId: rfq.rfq_id,
+            supplierName: document.getElementById('supp-name').value,
+            currency: document.getElementById('supp-currency').value,
+            leadTime: document.getElementById('supp-leadtime').value,
+            payment: document.getElementById('supp-payment').value,
+            total: parseFloat(document.getElementById('total-display').innerText.replace(/,/g, '')),
+            items: rfq.line_items.map(i => ({
+                line: i.line,
+                unitPrice: prices[i.line] || 0,
+                quantity: i.quantity
+            }))
+        };
+
+        try {
+            const res = await fetch(`${SERVER_URL}/rfqs/${rfq.rfq_id}/quotes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(quote)
+            });
+            if(res.ok) {
+                alert("Quote Submitted Successfully!");
+                btn.innerText = "Submitted";
+            } else {
+                throw new Error("Failed");
+            }
+        } catch(e) {
+            alert("Error submitting quote");
+            btn.disabled = false;
+            btn.innerText = "Submit Quote";
+        }
+    };
   </script>
 </body>
 </html>

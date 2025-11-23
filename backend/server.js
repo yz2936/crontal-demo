@@ -1,730 +1,240 @@
-// server.js
-//
-// Crontal RFQ backend with:
-// - /api/buyer/parse-request
-// - /api/buyer/clarify
-// - /api/buyer/upload-specs (PDF/Excel -> structured RFQ, with or without AI)
-// - /api/buyer/negotiate
-// - /api/rfqs/:id, /api/rfqs/:id/quotes
-// - static serving from /public
-//
-// Run (with AI):
-//   npm install express cors multer xlsx openai dotenv
-//   export OPENAI_API_KEY="your-key"
-//   node server.js
-//
-// Run (without AI):
-//   npm install express cors multer xlsx dotenv
-//   node server.js
-//   (fallback parsers will be used)
 
 const express = require("express");
-const cors    = require("cors");
-const multer  = require("multer");
-const xlsx    = require("xlsx");
-const fs      = require("fs");
-const path    = require("path");
-const OpenAI  = require("openai");
+const cors = require("cors");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const { GoogleGenAI } = require("@google/genai");
 
-// 👇 Load env vars from backend/.env if present
-require("dotenv").config({
-  path: path.join(__dirname, ".env"),
-  override: true,
-});
+require("dotenv").config();
 
-// Multer for file uploads
-const upload = multer({
-  dest: "uploads/",
-  limits: {
-    fileSize: 25 * 1024 * 1024, // 25MB per file
-    files: 5                     // max 5 files per request
-  }
-});
-
-// In-memory stores
-const rfqStore   = {}; // { [rfq_id]: rfqObject }
-const quoteStore = {}; // { [rfq_id]: [quote, ...] }
-
-// ---------------------------
-// Basic setup
-// ---------------------------
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
-// ---------------------------
-// OpenAI client (optional)
-// ---------------------------
-let client = null;
-if (process.env.OPENAI_API_KEY) {
-  client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  console.log("OpenAI client initialized (API key present).");
-} else {
-  console.warn(
-    "WARNING: OPENAI_API_KEY is not set. Falling back to simple, non-AI parsing for RFQ endpoints."
-  );
-}
+// Initialize Gemini
+// WARNING: process.env.API_KEY must be set in a .env file
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const MODEL_FAST = "gemini-2.5-flash";
 
-// ---------------------------
-// Helper: naive parser for fallback mode
-// ---------------------------
+// File upload setup
+const upload = multer({ dest: "uploads/" });
 
-/**
- * Very simple parser: turn messy text into line_items, one per non-empty line.
- * This is used when OpenAI is not available or as a last-resort fallback.
- */
-function naiveLineItemsFromText(text) {
-  const lines = String(text || "")
-    .split(/\r?\n/)
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+// In-memory store for demo purposes
+const rfqStore = {}; 
+const quoteStore = {};
 
-  return lines.map((line, idx) => ({
-    item_id: `L${idx + 1}`,
-    raw_description: line,
-    product_category: null,
-    product_type: null,
-    material_grade: null,
-    standard_or_spec: null,
-    size: {
-      outer_diameter: { value: null, unit: null },
-      wall_thickness: { value: null, unit: null },
-      length:        { value: null, unit: null }
+// Helper to convert file to generative part
+function fileToGenerativePart(path, mimeType) {
+  return {
+    inlineData: {
+      data: fs.readFileSync(path).toString("base64"),
+      mimeType,
     },
-    quantity: null,
-    unit: null,
-    delivery_location: null,
-    required_delivery_date: null,
-    incoterm: null,
-    payment_terms: null,
-    other_requirements: []
-  }));
-}
-
-// ---------------------------
-// Helper: safely call chat model and return text
-// ---------------------------
-async function callChatModel(messages, model = "gpt-4o-mini") {
-  if (!client) {
-    throw new Error("OpenAI client is not configured (no API key).");
-  }
-
-  const completion = await client.chat.completions.create({
-    model,
-    messages
-  });
-
-  const content =
-    completion?.choices?.[0]?.message?.content ||
-    completion?.choices?.[0]?.text ||
-    null;
-
-  if (!content) {
-    console.error("Empty model response:", completion);
-    throw new Error("Empty model response from LLM");
-  }
-
-  return content;
-}
-
-// ---------------------------
-// Helper: extract text from Excel/PDF/others
-// ---------------------------
-async function extractTextFromFile(file) {
-  const ext = (file.originalname.split(".").pop() || "").toLowerCase();
-  const filePath = file.path;
-
-  // 1) Excel – tech spec or BOM
-  if (ext === "xlsx" || ext === "xls") {
-    const workbook = xlsx.readFile(filePath);
-    let allSheetsText = "";
-
-    workbook.SheetNames.forEach((sheetName) => {
-      const sheet = workbook.Sheets[sheetName];
-      if (!sheet) return;
-      const csv = xlsx.utils.sheet_to_csv(sheet, { FS: ",", RS: "\n" });
-      allSheetsText += `\n\nSHEET: ${sheetName}\n${csv}`;
-    });
-
-    if (!allSheetsText.trim()) {
-      console.warn(
-        `No useful content found in Excel file ${file.originalname}.`
-      );
-    }
-
-    return `EXCEL FILE: ${file.originalname}\n${allSheetsText}`;
-  }
-
-  // 2) PDF – treat bytes as text (best-effort; not true OCR)
-  if (ext === "pdf") {
-    try {
-      const buf = fs.readFileSync(filePath);
-      let text = buf.toString("utf8");
-
-      if (!text || !text.trim()) {
-        console.warn(
-          `No clear text extracted from PDF ${file.originalname}. Likely scanned or mostly graphical.`
-        );
-        text =
-          "[NO CLEAR TEXT EXTRACTED – PDF may be scanned or graphical. Buyer may need to upload a BOM or type the scope in text.]";
-      }
-
-      return `PDF FILE: ${file.originalname}\n\n${text}`;
-    } catch (err) {
-      console.error(`Raw read failed for PDF ${file.originalname}:`, err);
-      return `PDF FILE: ${file.originalname}\n\n[UNABLE TO READ PDF BYTES – ${
-        err.message || err
-      }]`;
-    }
-  }
-
-  // 3) Others – treat as plain text
-  try {
-    const raw = fs.readFileSync(filePath, "utf8");
-    if (!raw.trim()) {
-      console.warn(`File ${file.originalname} appears empty as text.`);
-      return `FILE: ${file.originalname}\n\n[NO TEXT EXTRACTED]`;
-    }
-    return `FILE: ${file.originalname}\n\n${raw}`;
-  } catch (err) {
-    console.error(`Raw read failed for ${file.originalname}:`, err);
-    return `FILE: ${file.originalname}\n\n[UNABLE TO READ FILE CONTENT – ${
-      err.message || err
-    }]`;
-  }
-}
-
-// ---------------------------
-// Helper: OpenAI spec → line_items
-// ---------------------------
-async function parseSpecsToLineItems(combinedText, project_name = null) {
-  if (!client) {
-    // Fallback: naive parsing (no AI)
-    return {
-      project_name: project_name || "Untitled RFQ",
-      line_items: naiveLineItemsFromText(combinedText)
-    };
-  }
-
-  const MAX_CHARS = 12000;
-  const truncated =
-    combinedText.length > MAX_CHARS
-      ? combinedText.slice(0, MAX_CHARS) + "\n\n[TRUNCATED]"
-      : combinedText;
-
-  const systemPrompt = `
-You are a procurement assistant for industrial stainless steel / metal projects.
-
-You receive long, complex technical content: engineering drawings, design specifications, BOM tables, datasheets.
-
-Your job is to extract a CLEAN LIST of procurement line items in THIS JSON schema:
-
-{
-  "project_name": string|null,
-  "line_items": [
-    {
-      "item_id": string,
-      "raw_description": string,
-      "product_category": string|null,
-      "product_type": string|null,
-      "material_grade": string|null,
-      "standard_or_spec": string|null,
-      "size": {
-        "outer_diameter": { "value": number|null, "unit": string|null },
-        "wall_thickness": { "value": number|null, "unit": string|null },
-        "length":        { "value": number|null, "unit": string|null }
-      },
-      "quantity": number|null,
-      "unit": string|null,
-      "delivery_location": string|null,
-      "required_delivery_date": string|null,
-      "incoterm": string|null,
-      "payment_terms": string|null,
-      "other_requirements": string[]
-    }
-  ]
-}
-
-Rules:
-- Focus on items that must be physically procured (pipes, tubes, fittings, valves, plates, structural steel, fasteners, gaskets, instruments, etc.).
-- If multiple distinct sizes, ratings or materials are present, split them into separate line_items.
-- Use "other_requirements" for free-text like "cut to 500–1000 mm", "plywood case", "ISO9001 and MTC".
-- Only use null when the document truly does not specify the value.
-- Do NOT invent sizes, grades or quantities.
-- project_name can be inferred from context or null.
-- Return ONLY the JSON object, no extra text.
-`;
-
-  const userPrompt = `
-Below are one or more files from a project specification package
-(engineering PDFs and Excel tech specs).
-
-Please extract a clean list of line_items that a buyer would need to source from suppliers.
-
-Provided project_name (may be null): ${project_name || "null"}
-
-TEXT STARTS:
-"""${truncated}"""
-`;
-
-  const messages = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt }
-  ];
-
-  const content = await callChatModel(messages, "gpt-4o-mini");
-  try {
-    return JSON.parse(content);
-  } catch (err) {
-    console.error("Failed to parse JSON from model output:", err);
-    const e = new Error("Failed to parse JSON from model output: " + (err.message || err));
-    e.raw = content;
-    throw e;
-  }
-}
-
-// ---------------------------
-// /api/buyer/parse-request
-// ---------------------------
-app.post("/api/buyer/parse-request", async (req, res) => {
-  const { text, project_name } = req.body || {};
-  if (!text) return res.status(400).json({ error: "Missing text" });
-
-  // If no OpenAI, use simple line splitter
-  if (!client) {
-    const rfqId = "RFQ-" + Date.now();
-    const lineItems = naiveLineItemsFromText(text);
-
-    const rfq = {
-      rfq_id: rfqId,
-      project_name: project_name || "Untitled RFQ",
-      line_items: lineItems,
-      original_text: text
-    };
-    rfqStore[rfqId] = rfq;
-    return res.json(rfq);
-  }
-
-  const systemPrompt = `
-You turn messy natural-language procurement text into a structured RFQ JSON object
-for industrial stainless steel / metal products.
-
-The input text may be an email, bullets, or a long paragraph.
-Identify each distinct product (tube/pipe/fitting/valve, etc) and commercial terms.
-
-Return ONLY JSON in this schema:
-
-{
-  "project_name": string|null,
-  "line_items": [
-    {
-      "item_id": string,
-      "raw_description": string,
-      "product_category": string|null,
-      "product_type": string|null,
-      "material_grade": string|null,
-      "standard_or_spec": string|null,
-      "size": {
-        "outer_diameter": { "value": number|null, "unit": string|null },
-        "wall_thickness": { "value": number|null, "unit": string|null },
-        "length":        { "value": number|null, "unit": string|null }
-      },
-      "quantity": number|null,
-      "unit": string|null,
-      "delivery_location": string|null,
-      "required_delivery_date": string|null,
-      "incoterm": string|null,
-      "payment_terms": string|null,
-      "other_requirements": string[]
-    }
-  ]
-}
-
-Rules:
-- One line_item per distinct product (size/material/use).
-- If numerical details are unclear, set value to null and put text in other_requirements.
-- Do NOT invent data. Use null when not given.
-- project_name can be inferred from context or null.
-- Return ONLY the JSON object, no extra text.
-`;
-
-  const userPrompt = `
-Buyer RFQ text:
-"""${text}"""
-
-Provided project_name (may be null): ${project_name || "null"}
-
-Extract line_items and commercial terms.
-`;
-
-  try {
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ];
-
-    const content = await callChatModel(messages, "gpt-4o-mini");
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch (err) {
-      console.error("Failed to parse JSON from model output:", err);
-      return res.status(500).json({
-        error: "Failed to parse JSON from model output",
-        raw_model_output: content,
-        detail: err.message
-      });
-    }
-
-    const finalProjectName =
-      parsed.project_name || project_name || "Untitled RFQ";
-
-    const rfqId = "RFQ-" + Date.now();
-
-    const rfq = {
-      rfq_id: rfqId,
-      project_name: finalProjectName,
-      line_items: parsed.line_items || [],
-      original_text: text
-    };
-
-    rfqStore[rfqId] = rfq;
-
-    res.json(rfq);
-
-  } catch (err) {
-    console.error("Parsing failed:", err);
-    res.status(500).json({ error: "Parsing failed", detail: err.message });
-  }
-});
-
-// ---------------------------
-// /api/buyer/clarify
-// ---------------------------
-app.post("/api/buyer/clarify", async (req, res) => {
-  const { rfq, history, user_message, lang } = req.body || {};
-  const language = lang || "en";
-
-  if (!rfq) {
-    return res.status(400).json({ error: "Missing rfq in request body" });
-  }
-
-  // Fallback when no AI: just echo a helpful stub
-  if (!client) {
-    const rfqId = rfq.id || rfq.rfq_id || "RFQ";
-    const msg =
-      `I’ve captured your RFQ (${rfqId}). ` +
-      `Please confirm destination, Incoterm, payment terms, and any required delivery dates for all items. ` +
-      `You can update those fields directly in the table.`;
-    return res.json({ assistant_message: msg });
-  }
-
-  const LANGUAGE_PROMPT = {
-    en: "Respond in English.",
-    es: "Responde en español claro y profesional.",
-    zh: "请使用简体中文回答，保持专业和简洁。"
   };
-  const systemPrompt = `
-  
-  ${LANGUAGE_PROMPT[language] || LANGUAGE_PROMPT.en}
+}
 
-  You are Crontal's RFQ conversation assistant for industrial stainless steel / metal procurement.
-
-Goal:
-- Help the buyer refine a structured RFQ (already parsed) through short, concrete messages.
-- Always reference the STRUCTURED RFQ JSON you receive, not just the raw text.
-
-VERY IMPORTANT:
-- Before asking for more information, carefully READ the existing rfq.line_items and rfq.commercial fields.
-- ONLY ask for details that are still missing across MOST line items.
-  - If description, grade and size are already present, do NOT say they are missing.
-  - If destination, incoterm, or payment_terms are already set, do NOT ask for them again.
-
-Your job:
-1) Briefly confirm what you have understood.
-2) Call out IMPORTANT missing details ONLY if they are truly missing.
-3) Make 1–3 SPECIFIC suggestions about what to update in the table on the right.
-4) Ask 1 clear follow-up question.
-
-Style:
-- Be concise (3–6 sentences).
-- Use plain, professional language.
-- Do NOT repeat what Crontal is or greet again.
-`;
-
-  const items = rfq.items || rfq.line_items || [];
-  const rfqSummary = JSON.stringify(
-    {
-      rfq_id: rfq.id || rfq.rfq_id,
-      project_name: rfq.project_name,
-      commercial: rfq.commercial,
-      line_items: items.map((li) => ({
-        line: li.line,
-        description: li.description || li.product_type || li.raw_description,
-        grade: li.grade || li.material_grade,
-        quantity: li.quantity,
-        uom: li.uom || li.unit
-      }))
-    },
-    null,
-    2
-  );
-
-  const historyMessages = Array.isArray(history)
-    ? history.map((m) => ({
-        role: m.role === "assistant" ? "assistant" : "user",
-        content: m.content || ""
-      }))
-    : [];
-
-  const latestUser = user_message || "";
-
+// 1. Parse/Edit Endpoint
+app.post("/api/buyer/parse", upload.array("files"), async (req, res) => {
   try {
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content:
-            "Here is the current structured RFQ JSON:\n\n" +
-            rfqSummary +
-            "\n\nUse this as ground truth for what has been parsed so far."
-        },
-        ...historyMessages,
-        latestUser
-          ? {
-              role: "user",
-              content:
-                "Latest buyer message (may clarify destination, dates, payment, etc.):\n\n" +
-                latestUser
-            }
-          : {
-              role: "user",
-              content:
-                "No new buyer message; just suggest next refinements based on the RFQ JSON."
-            }
-      ]
-    });
+    const { text, projectName, currentLineItems, lang } = req.body;
+    const files = req.files || [];
+    
+    // Parse current items if sent as string
+    let currentItems = [];
+    if (currentLineItems) {
+        try { currentItems = JSON.parse(currentLineItems); } catch (e) {}
+    }
 
-    const assistant_message =
-      completion.choices[0].message.content?.trim() ||
-      "I’ve interpreted your RFQ and populated the table. Let me know what delivery location, dates, and payment terms you want so I can tighten it further.";
+    const isEditMode = currentItems.length > 0;
+    const language = lang || 'en';
 
-    return res.json({ assistant_message });
-  } catch (err) {
-    console.error("Clarify failed:", err);
-    return res
-      .status(500)
-      .json({ error: "Clarify failed", detail: err.message || String(err) });
-  }
-});
+    const systemInstruction = `
+    You are Crontal's expert procurement AI. Your role is to extract or modify structured RFQ data.
 
-// ---------------------------
-// /api/buyer/upload-specs
-// ---------------------------
-app.post("/api/buyer/upload-specs", upload.array("files"), async (req, res) => {
-  const files = req.files || [];
-  const { project_name } = req.body || {};
+    MODE: ${isEditMode ? "EDITING EXISTING LIST" : "CREATING NEW LIST"}
 
-  if (!files.length) {
-    return res.status(400).json({ error: "No files uploaded." });
-  }
+    YOUR TASKS:
+    1. Analyze the text input and any files.
+    2. ${isEditMode 
+        ? `The user wants to MODIFY the "Current Line Items" provided.
+           - IF user says "Delete line X" or "Remove item X": Exclude it from the returned list.
+           - IF user says "Change quantity/grade/size...": Update the specific item.
+           - IF user provides new specs: Append them as new items.
+           - ALWAYS return the COMPLETE, valid list of items after applying changes.
+           - Preserve existing IDs for unchanged items.` 
+        : `Extract all line items from scratch.`}
+    
+    3. DIMENSION HANDLING:
+       - You MUST split dimensions into: 
+         * OD (Outer Diameter)
+         * WT (Wall Thickness)
+         * Length
+       - Normalize units to: 'mm', 'm', 'in', 'ft', 'pcs'.
+    
+    4. COMMERCIAL TERMS:
+       - Extract Destination, Incoterm, Payment Terms if mentioned.
 
-  try {
-    const texts = [];
+    OUTPUT FORMAT:
+    - Return ONLY valid JSON matching the schema.
+    - If inferring text, use language: "${language}".
+    `;
 
+    const parts = [];
+    
+    let promptText = `USER REQUEST:\n"""${text}"""\n\nProject Name Context: ${projectName || "N/A"}\n`;
+    if (isEditMode) {
+        promptText += `\n\n[CURRENT LINE ITEMS DATA - APPLY CHANGES TO THIS LIST]:\n${JSON.stringify(currentItems, null, 2)}\n`;
+    }
+
+    parts.push({ text: promptText });
+
+    // Process uploaded files
     for (const file of files) {
-      try {
-        const text = await extractTextFromFile(file);
-        if (text && text.trim()) {
-          texts.push(text);
-        }
-      } catch (err) {
-        console.error(`Failed to extract from ${file.originalname}:`, err);
-      } finally {
-        try {
-          fs.unlinkSync(file.path);
-        } catch {
-          // ignore
-        }
-      }
+        parts.push(fileToGenerativePart(file.path, file.mimetype));
+        // Clean up temp file
+        fs.unlinkSync(file.path);
     }
 
-    if (!texts.length) {
-      console.warn("upload-specs: no text extracted from any file.");
-      const fallbackText = files
-        .map(
-          (f) =>
-            `FILE: ${
-              f.originalname
-            } (no readable content extracted; likely scanned or unsupported format)`
-        )
-        .join("\n");
-      texts.push(fallbackText);
-    }
+    // Call Gemini
+    const response = await ai.models.generateContent({
+        model: MODEL_FAST,
+        contents: { parts },
+        config: {
+            systemInstruction: systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "OBJECT",
+                properties: {
+                    project_name: { type: "STRING", nullable: true },
+                    commercial: {
+                        type: "OBJECT",
+                        properties: {
+                            destination: { type: "STRING", nullable: true },
+                            incoterm: { type: "STRING", nullable: true },
+                            payment_terms: { type: "STRING", nullable: true },
+                            other_requirements: { type: "STRING", nullable: true }
+                        }
+                    },
+                    line_items: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                item_id: { type: "STRING" },
+                                description: { type: "STRING" },
+                                product_type: { type: "STRING", nullable: true },
+                                material_grade: { type: "STRING", nullable: true },
+                                size: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        od_val: { type: "NUMBER", nullable: true },
+                                        od_unit: { type: "STRING", nullable: true },
+                                        wt_val: { type: "NUMBER", nullable: true },
+                                        wt_unit: { type: "STRING", nullable: true },
+                                        len_val: { type: "NUMBER", nullable: true },
+                                        len_unit: { type: "STRING", nullable: true }
+                                    }
+                                },
+                                quantity: { type: "NUMBER", nullable: true },
+                                uom: { type: "STRING", nullable: true }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
 
-    const combinedText = texts.join(
-      "\n\n----- FILE SEPARATOR -----\n\n"
-    );
+    const parsedData = JSON.parse(response.text || "{}");
 
-    const parsed = await parseSpecsToLineItems(combinedText, project_name);
-    const finalProjectName =
-      parsed.project_name || project_name || "Untitled RFQ";
-    const lineItems = Array.isArray(parsed.line_items)
-      ? parsed.line_items
-      : [];
+    // Map to internal structure
+    const items = (parsedData.line_items || []).map((li, idx) => {
+        return {
+            item_id: li.item_id || `L${Date.now()}-${idx}`,
+            line: idx + 1,
+            description: li.description || "",
+            material_grade: li.material_grade || "",
+            size: {
+                outer_diameter: { value: li.size?.od_val, unit: li.size?.od_unit },
+                wall_thickness: { value: li.size?.wt_val, unit: li.size?.wt_unit },
+                length: { value: li.size?.len_val, unit: li.size?.len_unit }
+            },
+            quantity: li.quantity,
+            uom: li.uom
+        };
+    });
 
-    const rfqId = "RFQ-" + Date.now();
-    const rfq = {
-      rfq_id: rfqId,
-      project_name: finalProjectName,
-      line_items: lineItems,
-      original_text: combinedText
+    const rfqId = req.body.rfqId || `RFQ-${Date.now().toString().slice(-4)}`;
+    
+    const result = {
+        rfq_id: rfqId,
+        project_name: parsedData.project_name,
+        commercial: {
+            destination: parsedData.commercial?.destination || "",
+            incoterm: parsedData.commercial?.incoterm || "",
+            paymentTerm: parsedData.commercial?.payment_terms || "",
+            otherRequirements: parsedData.commercial?.other_requirements || ""
+        },
+        line_items: items
     };
+    
+    // Store/Update it
+    rfqStore[result.rfq_id] = result;
 
-    rfqStore[rfqId] = rfq;
+    res.json(result);
 
-    return res.json(rfq);
-
-  } catch (err) {
-    console.error("upload-specs failed:", err);
-    return res.status(500).json({
-      error: "Parsing failed",
-      detail: err.message || String(err)
-    });
+  } catch (error) {
+    console.error("Parse Error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// ---------------------------
-// /api/buyer/negotiate
-// ---------------------------
-app.post("/api/buyer/negotiate", async (req, res) => {
-  const { rfq, quote, goal } = req.body || {};
+// 2. Clarify/Chat Endpoint
+app.post("/api/buyer/clarify", async (req, res) => {
+    try {
+        const { rfq, userMessage, lang } = req.body;
+        const systemInstruction = `
+        You are Crontal's RFQ assistant.
+        Goal: Confirm the user's action (edit/delete/add) and summarize the current state of the RFQ.
+        Input Context: The table has ALREADY been updated by the parsing engine.
+        Your job is just to generate a polite confirmation message in "${lang || 'en'}".
+        Example: "I've removed line 3 as requested." or "I've added the new specs."
+        Keep it short.
+        `;
 
-  if (!rfq || !quote) {
-    return res.status(400).json({ error: "Missing rfq or quote in request body" });
-  }
+        const rfqSummary = JSON.stringify({
+            item_count: rfq.line_items.length,
+            items_sample: rfq.line_items.slice(0, 3).map(i => `${i.quantity} ${i.uom} ${i.description}`)
+        });
 
-  if (!client) {
-    const fallback =
-      "OpenAI is not configured, so I cannot generate a detailed negotiation strategy. " +
-      "As a starting point, you can ask for improved price, shorter lead time, or more favorable payment terms " +
-      "based on your priorities, and reference competing quotes if available.";
-    return res.json({ advice: fallback });
-  }
+        const response = await ai.models.generateContent({
+            model: MODEL_FAST,
+            contents: `Updated RFQ State: ${rfqSummary}\n\nUser Action: ${userMessage}`,
+            config: { systemInstruction }
+        });
 
-  const systemPrompt = `
-You are Crontal's negotiation assistant helping an industrial buyer negotiate RFQs with suppliers.
-
-Given:
-- rfq: structured JSON of what the buyer is procuring
-- quote: a supplier's quote including prices, lead time, payment terms, notes
-- goal: a short string describing the buyer's negotiation objective
-
-Tasks:
-1. Briefly restate what the supplier is offering (1–2 sentences).
-2. Provide 2–4 concrete negotiation suggestions aligned with the goal.
-3. Draft a short sample email paragraph the buyer could send to the supplier to open the negotiation.
-
-Keep it practical, professional, and under about 200 words.
-Return plain text (no JSON).
-`;
-
-  const context = {
-    rfq: {
-      id: rfq.id || rfq.rfq_id,
-      commercial: rfq.commercial,
-      items: (rfq.items || []).map((it) => ({
-        line: it.line,
-        description: it.description,
-        grade: it.grade,
-        quantity: it.quantity,
-        uom: it.uom
-      }))
-    },
-    quote
-  };
-
-  try {
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content:
-            "RFQ and quote data:\n" +
-            JSON.stringify(context, null, 2) +
-            "\n\nNegotiation goal: " +
-            (goal || "negotiate this quote in the buyer's favor")
-        }
-      ]
-    });
-
-    const advice = completion.choices[0].message.content?.trim() || "";
-    return res.json({ advice });
-  } catch (err) {
-    console.error("negotiate failed:", err);
-    return res
-      .status(500)
-      .json({ error: "Negotiation failed", detail: err.message || String(err) });
-  }
+        res.json({ message: response.text });
+    } catch (error) {
+        res.json({ message: "I've updated the table. Please review the details." });
+    }
 });
 
-// ---------------------------
-// RFQ + quotes for buyer/supplier flows
-// ---------------------------
-
-// Supplier / buyer: fetch RFQ by ID
-app.get("/api/rfqs/:id", (req, res) => {
-  const id = req.params.id;
-  const rfq = rfqStore[id];
-  if (!rfq) {
-    return res.status(404).json({ error: "RFQ not found" });
-  }
-  res.json(rfq);
+// 3. Get RFQ
+app.get("/api/rfq/:id", (req, res) => {
+    const rfq = rfqStore[req.params.id];
+    if(rfq) res.json(rfq);
+    else res.status(404).json({error: "Not found"});
 });
 
-// Supplier: submit a quote for a given RFQ
+// 4. Submit Quote
 app.post("/api/rfqs/:id/quotes", (req, res) => {
-  const id = req.params.id;
-  const rfq = rfqStore[id];
-  if (!rfq) {
-    return res.status(404).json({ error: "RFQ not found" });
-  }
-
-  const quote = req.body;
-  if (!quote || typeof quote !== "object") {
-    return res.status(400).json({ error: "Invalid quote payload" });
-  }
-
-  if (!quoteStore[id]) quoteStore[id] = [];
-  quoteStore[id].push(quote);
-
-  res.json({ ok: true });
+    const id = req.params.id;
+    const quote = req.body;
+    if(!quoteStore[id]) quoteStore[id] = [];
+    quoteStore[id].push(quote);
+    res.json({success: true});
 });
 
-// Buyer: fetch all quotes for an RFQ
-app.get("/api/rfqs/:id/quotes", (req, res) => {
-  const id = req.params.id;
-  const quotes = quoteStore[id] || [];
-  res.json({ quotes });
-});
-
-// ---------------------------
-// Static frontend
-// ---------------------------
-app.use(express.static(path.join(__dirname, "../public")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "buyer-demo.html"));
-});
-
-// ---------------------------
-// Start server
-// ---------------------------
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Crontal RFQ backend listening on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

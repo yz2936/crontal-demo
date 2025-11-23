@@ -1,1746 +1,406 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Crontal · Buyer RFQ Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crontal · Buyer Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { accent: '#5a7baa' }
-        }
-      }
-    }
-  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <style>
-    /* Walkthrough overlay styling */
-    #walkthrough-overlay {
-      z-index: 60;
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { accent: '#5a7baa' } } }
     }
-
-    .tour-highlight {
-      position: relative;
-      z-index: 61;
-      box-shadow: 0 0 0 2px #5a7baa, 0 0 0 6px rgba(90, 123, 170, 0.25);
-      border-radius: 0.75rem;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at top left, #dde8ff 0, #f4f6fc 45%, #ffffff 100%);
-      color: #0f172a;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .rounded-2xl.border.bg-white {
-      background-color: #ffffff;
-      border-color: #e2e8f0;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-      transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
-    }
-    .rounded-2xl.border.bg-white:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
-      border-color: #c7d2fe;
-      background-color: #fdfdff;
-    }
-    #chat-window {
-      background-color: #f9fafb !important;
-      border-color: #e5e7eb !important;
-    }
-    #chat-window .bg-accent\/10 {
-      background-color: rgba(90, 123, 170, 0.15) !important;
-    }
-    #chat-window .bg-white.border.border-slate-200 {
-      background-color: #ffffff !important;
-      border-color: #e5e7eb !important;
-    }
-    #rfp-output {
-      background: linear-gradient(135deg, #f9fafb 0%, #f3f4ff 40%, #ffffff 100%) !important;
-      border-color: #c7d2fe !important;
-    }
-    .loading-dots {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      margin-left: 4px;
-    }
-    .loading-dots .dot {
-      width: 4px;
-      height: 4px;
-      border-radius: 999px;
-      background-color: #9ca3af;
-      animation: dotBounce 1s infinite ease-in-out;
-    }
-    .loading-dots .dot:nth-child(2) { animation-delay: 0.15s; }
-    .loading-dots .dot:nth-child(3) { animation-delay: 0.3s; }
-    @keyframes dotBounce {
-      0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-      40% { transform: translateY(-2px); opacity: 1; }
-    }
-
-    .step-frame {
-      border-radius: 1.5rem;
-      border-width: 2px;
-      border-color: #e5e7eb;
-      background-color: rgba(248, 250, 252, 0.9); /* slate-50-ish */
-      padding: 0.9rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .journey-step {
-      border-radius: 999px;
-      border-width: 1px;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.675rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      white-space: nowrap;
-    }
-    .journey-step-active {
-      background-color: rgba(90,123,170,0.12);
-      border-color: rgba(90,123,170,0.6);
-      color: #1e293b;
-      font-weight: 600;
-    }
-    .journey-step-inactive {
-      background-color: #f9fafb;
-      border-color: #e5e7eb;
-      color: #6b7280;
-      font-weight: 500;
-    }
-  </style>
+  </script>
 </head>
-<body class="min-h-screen">
-  <div class="max-w-6xl mx-auto px-4 py-8 md:py-10">
-    <header class="flex flex-col gap-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
-            <span class="text-accent font-semibold text-lg">C</span>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900" data-i18n="app.brand">Crontal</h1>
-              <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-500 bg-white" data-i18n="badge.buyer">
-                Buyer RFQ
-              </span>
-            </div>
-            <p class="text-xs md:text-sm text-slate-500 mt-1" data-i18n="app.subtitle">
-              Turn informal descriptions and specs into a structured RFQ you can share with suppliers.
-            </p>
-          </div>
-        </div>
+<body class="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white bg-fixed text-slate-900">
 
-        <div class="flex items-center gap-3 self-start md:self-auto">
-          <select id="lang-select-buyer"
-                  class="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] text-slate-600 hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent">
+  <div class="max-w-7xl mx-auto px-4 py-6 md:py-8">
+    
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-accent/10 border border-accent flex items-center justify-center">
+          <span class="text-accent font-semibold text-lg">C</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-semibold text-slate-900">Crontal</h1>
+          <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase bg-white text-slate-500">Buyer Portal</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+         <select id="lang-selector" class="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-accent">
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="zh">简体中文</option>
-          </select>
-
-          <button id="buyer-tour-btn"
-                  class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] text-slate-600 hover:border-accent hover:text-accent hover:bg-accent/5 transition">
-            <span data-i18n="btn.guide">Guide me through this</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Flow strip -->
-      <div id="buyer-journey"
-              class="sticky top-0 z-40 inline-flex flex-wrap items-center gap-2 bg-white/80 backdrop-blur-xl border border-slate-200 rounded-xl px-4 py-2 text-[11px] shadow-sm">
-        <span class="text-slate-400 mr-1 uppercase tracking-wide" data-i18n="flow.label">Flow</span>
-        <button type="button"
-                id="buyer-step-1"
-                class="journey-step journey-step-active">
-          <span class="text-slate-400">1</span>
-          <span data-i18n="flow.step1">Describe & upload</span>
-        </button>
-        <span class="text-slate-300">›</span>
-        <button type="button"
-                id="buyer-step-2"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">2</span>
-          <span data-i18n="flow.step2">Review & share RFQ</span>
-        </button>
-        <span class="text-slate-300">›</span>
-        <button type="button"
-                id="buyer-step-3"
-                class="journey-step journey-step-inactive">
-          <span class="text-slate-400">3</span>
-          <span data-i18n="flow.step3">Compare quotes & award</span>
-        </button>
+         </select>
+         <div class="text-right hidden sm:block border-l pl-3 border-slate-200">
+            <p class="text-[11px] font-bold text-slate-700">Demo User</p>
+         </div>
       </div>
     </header>
 
-    <!-- Column labels -->
-    <div class="mt-6 grid gap-6 md:grid-cols-2 text-[11px] text-slate-500">
-      <div class="md:pr-4">
-        <p class="uppercase tracking-wide mb-1" data-i18n="col.left.title">Build request</p>
-        <p data-i18n="col.left.desc">Describe what you need and upload specs. Crontal will draft the RFQ for you.</p>
-      </div>
-      <div class="md:pl-4">
-        <p class="uppercase tracking-wide mb-1" data-i18n="col.right.title">Review & decide</p>
-        <p data-i18n="col.right.desc">Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.</p>
-      </div>
-    </div>
-
-    <main class="mt-4 grid gap-6 md:grid-cols-2">
-            <!-- Left: Step 1 frame + Step 3 award -->
-      <section class="space-y-4">
-        <!-- STEP 1 FRAME: upload + chat -->
-        <div class="step-frame">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-500">
-                <span class="font-semibold">Step 1</span> · 
-                <span data-i18n="flow.step1">Describe & upload</span>
-              </p>
-              <p class="mt-1 text-[11px] text-slate-500">
-                Use files and natural language to draft your RFQ. Crontal will generate structured line items on the right.
-              </p>
+    <!-- Main Content Grid -->
+    <div class="grid md:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left: Chat (Sticky) -->
+      <div class="md:col-span-4 flex flex-col md:sticky md:top-4 md:h-[calc(100vh-2rem)] h-[500px]">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden flex flex-col h-full">
+            <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center sticky top-0 z-10">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Drafting Assistant</span>
+                </div>
             </div>
-          </div>
 
-          <!-- File upload (sub-step) -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col text-xs">
-            <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-200">
-              <div>
-                <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.upload.title">
-                  Upload design / spec files
-                </h2>
-                <p class="mt-1 text-xs text-slate-500" data-i18n="section.upload.subtitle">
-                  Upload engineering PDFs and Excel tech specs to auto-generate line items.
-                </p>
-              </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/30">
+                <div class="flex justify-start">
+                    <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-white border border-slate-200 text-slate-700 rounded-bl-sm shadow-sm">
+                        Hi! I'm Crontal. Tell me what you need to buy (grade, size, quantity), or upload an engineering drawing, and I'll draft the RFQ.
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 space-y-2">
-              <div>
-                <label class="text-[11px] uppercase tracking-wide text-slate-500 mb-1 block" data-i18n="section.upload.filesLabel">
-                  Files
-                </label>
-                <input id="file-upload-input" type="file" multiple
-                      class="text-xs text-slate-800"
-                      accept=".pdf,.xls,.xlsx,.csv,.txt" />
-                <p class="text-[11px] text-slate-500 mt-1" data-i18n="section.upload.filesHelp">
-                  Supported now: engineering PDFs (.pdf) and tech spec spreadsheets (.xls, .xlsx). Max 5 files per run.
-                </p>
-              </div>
-              <div class="flex items-center gap-2 mt-2">
-                <button id="file-upload-btn"
-                        class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-i18n="section.upload.button">
-                  Parse files into line items
-                </button>
-                <p id="file-upload-status" class="text-[11px] text-slate-500"></p>
-              </div>
+
+            <!-- File Preview -->
+            <div id="file-preview" class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2 hidden"></div>
+
+            <!-- Input Area -->
+            <div class="p-3 bg-white border-t border-slate-100">
+                <div class="flex gap-2 relative">
+                    <input type="file" id="file-input" multiple class="hidden" accept=".pdf,image/*">
+                    <button onclick="document.getElementById('file-input').click()" class="text-slate-400 hover:text-accent p-2 rounded-xl hover:bg-accent/5 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    </button>
+                    <input type="text" id="chat-input" placeholder="Ex: 50 pcs 304L tubes..." class="flex-1 bg-slate-50 rounded-xl border-0 px-4 py-2 text-sm focus:ring-2 focus:ring-accent/20 focus:bg-white transition placeholder-slate-400">
+                    <button id="send-btn" class="bg-accent hover:bg-accent/90 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-md">Send</button>
+                </div>
             </div>
-          </div>
-
-          <!-- Chat (sub-step) -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 shadow-sm flex flex-col">
-            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
-              <div>
-                <h2 class="text-sm font-semibold tracking-tight text-slate-900" data-i18n="section.chat.title">
-                  Describe what you need
-                </h2>
-                <p class="mt-1 text-xs text-slate-500" data-i18n="section.chat.subtitle">
-                  Use plain language. Crontal will turn this into a structured RFQ on the right.
-                </p>
-              </div>
-            </div>
-            <div class="mt-3 text-xs flex flex-col gap-2">
-              <label class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.chat.label">
-                Conversation
-              </label>
-              <div id="chat-window"
-                  class="h-72 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 space-y-2 overflow-y-auto"></div>
-              <div class="mt-2 flex items-center gap-2">
-                <input id="chat-input" type="text"
-                      class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent"
-                      data-i18n-placeholder="chat.placeholder"
-                      placeholder="Example: 20 pcs 304L tubes, 2'' OD, 6m, CIF Houston, Net 30..." />
-                <button id="chat-send-btn"
-                        class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
-                        data-i18n="btn.send">
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 3 FRAME (left side sub-step: award email) -->
-        <div class="step-frame">
-          <div>
-            <p class="text-[11px] uppercase tracking-wide text-slate-500">
-              <span class="font-semibold">Step 3</span> · <span data-i18n="flow.step3">Compare quotes & award</span>
-            </p>
-            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.award.frameSubtitle">
-              After choosing a supplier, generate the award email and PDF documents from here.
-            </p>
-          </div>
-
-          <!-- existing award email card -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <div>
-                <p class="text-[11px] uppercase tracking-wide text-slate-500" data-i18n="section.award.stepLabel">
-                  Step 3 · Award email & PDF
-                </p>
-                <p class="text-[11px] text-slate-500" data-i18n="section.award.subtitle">
-                  Once you’ve picked a supplier, draft the award email and export the full RFQ as a PDF.
-                </p>
-              </div>
-              <button id="generate-rfp-btn"
-                      class="rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/20 transition"
-                      data-i18n="btn.generateAward">
-                Generate award email
-              </button>
-            </div>
-            <textarea id="rfp-output"
-                      class="mt-2 h-48 md:h-56 w-full rounded-xl px-3 py-2 text-xs md:text-[13px] leading-relaxed bg-slate-950/40 border border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent"
-                      data-i18n-placeholder="award.placeholder"
-                      placeholder="Award email will appear here after you click “Generate award email”."></textarea>
-          </div>
-        </div>
-      </section>
-
-
-      <!-- Right column -->
-      <section class="space-y-4">
-        <!-- STEP 2 FRAME: RFQ summary + share link -->
-        <div class="step-frame">
-          <div>
-            <p class="text-[11px] uppercase tracking-wide text-slate-500">
-              <span class="font-semibold">Step 2</span> · <span data-i18n="flow.step2">Review & share RFQ</span>
-            </p>
-            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.rfq.frameSubtitle">
-              Check the RFQ details that suppliers will see, then send them the link to respond.
-            </p>
-          </div>
-
-          <!-- Structured request card (existing) -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm">
-            ...  <!-- keep your existing RFQ card content here unchanged -->
-          </div>
-
-          <!-- Share link card (existing) -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs space-y-3 shadow-sm">
-            ...  <!-- keep existing share-link markup here -->
-          </div>
-        </div>
-
-        <!-- STEP 3 FRAME (right side sub-step: supplier quotes) -->
-        <div class="step-frame">
-          <div>
-            <p class="text-[11px] uppercase tracking-wide text-slate-500">
-              <span class="font-semibold">Step 3</span> · <span data-i18n="flow.step3">Compare quotes & award</span>
-            </p>
-            <p class="mt-1 text-[11px] text-slate-500" data-i18n="section.quotes.frameSubtitle">
-              As suppliers respond, compare their prices, delivery, and payment terms here.
-            </p>
-          </div>
-
-          <!-- Supplier responses card (existing) -->
-          <div class="rounded-2xl border bg-white p-4 md:p-5 text-xs shadow-sm space-y-3">
-            ...  <!-- keep your current supplier responses content -->
-          </div>
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- PDF PREVIEW MODAL -->
-  <div id="pdf-modal"
-       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
-    <div class="max-w-2xl w-[90%] bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-400/40 p-4 md:p-5 flex flex-col max-h-[80vh]">
-      <div class="flex items-center justify-between gap-3 mb-2">
-        <div>
-          <h2 class="text-sm font-semibold text-slate-900" data-i18n="pdf.preview.title">RFP PDF preview</h2>
-          <p class="text-[11px] text-slate-500" data-i18n="pdf.preview.subtitle">
-            This is the content that will be exported to PDF with signature lines.
-          </p>
-        </div>
-        <button id="pdf-modal-close"
-                class="text-[11px] text-slate-500 hover:text-slate-900 px-2 py-1 rounded-lg border border-transparent hover:border-slate-300"
-                data-i18n="btn.close">
-          Close
-        </button>
-      </div>
-      <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-800">
-        <pre id="pdf-preview-text"
-             class="whitespace-pre-wrap font-mono text-[11px]"></pre>
-      </div>
-      <div class="mt-3 flex items-center justify-between gap-2">
-        <p class="text-[11px] text-slate-500" data-i18n="pdf.preview.help">
-          Click “Download PDF” to save a copy with signature areas.
-        </p>
-        <button id="pdf-download-btn"
-                class="rounded-xl border border-accent bg-accent/5 px-3 py-1.5 text-[11px] text-accent font-medium hover:bg-accent/10 transition"
-                data-i18n="btn.download">
-          Download PDF
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Walkthrough overlay -->
-  <div id="walkthrough-overlay"
-       class="fixed inset-0 bg-black/40 hidden">
-    <div id="walkthrough-box"
-         class="absolute bg-white rounded-xl shadow-2xl p-4 max-w-xs md:max-w-sm text-xs md:text-sm border border-slate-200">
-      <p id="walkthrough-text" class="text-slate-800"></p>
-      <div class="mt-3 flex justify-between items-center gap-2">
-        <button id="walkthrough-skip"
-                class="text-[11px] text-slate-500 hover:text-slate-700">
-          Skip walkthrough
-        </button>
-        <div class="flex items-center gap-2">
-          <span id="walkthrough-step-indicator"
-                class="text-[11px] text-slate-400"></span>
-          <button id="walkthrough-next"
-                  class="rounded-lg bg-accent text-white text-[11px] px-3 py-1.5 hover:bg-accent/90">
-            Next →
-          </button>
         </div>
       </div>
+
+      <!-- Right: Table (Scrollable) -->
+      <div class="md:col-span-8 flex flex-col">
+         <div class="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden flex flex-col">
+            
+            <!-- Toolbar -->
+            <div class="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Live Preview</span>
+                    <span id="rfq-id-display" class="ml-2 text-[10px] text-slate-400 font-mono"></span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="downloadPDF()" disabled id="btn-pdf" class="text-[10px] font-medium bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 disabled:opacity-50 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        PDF
+                    </button>
+                    <button onclick="shareLink()" disabled id="btn-share" class="text-[10px] bg-slate-900 text-white font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 shadow-md disabled:opacity-50">Share Link</button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 space-y-8 min-h-[400px]">
+                
+                <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-20">
+                    <div class="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <p class="text-sm font-medium">No RFQ generated yet.</p>
+                </div>
+
+                <div id="rfq-content" class="hidden space-y-6">
+                    <!-- Commercial Terms -->
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="group">
+                            <span class="block text-[10px] uppercase text-slate-400 font-semibold mb-2">Destination</span>
+                            <input id="comm-dest" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-1 focus:ring-accent outline-none transition" placeholder="TBD">
+                        </div>
+                        <div class="group">
+                            <span class="block text-[10px] uppercase text-slate-400 font-semibold mb-2">Incoterm</span>
+                            <input id="comm-incoterm" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-1 focus:ring-accent outline-none transition" placeholder="TBD">
+                        </div>
+                        <div class="group">
+                            <span class="block text-[10px] uppercase text-slate-400 font-semibold mb-2">Payment</span>
+                            <input id="comm-payment" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-1 focus:ring-accent outline-none transition" placeholder="TBD">
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <table class="w-full text-xs text-left whitespace-nowrap">
+                            <thead class="bg-white text-slate-500 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 w-10 text-center bg-slate-50/50">Line</th>
+                                    <th class="px-4 py-3">Desc</th>
+                                    <th class="px-4 py-3">Grade</th>
+                                    <th class="px-4 py-3 text-center border-x border-slate-100 bg-slate-50/30" colspan="2">OD</th>
+                                    <th class="px-4 py-3 text-center border-r border-slate-100 bg-slate-50/30" colspan="2">WT</th>
+                                    <th class="px-4 py-3 text-center border-r border-slate-100 bg-slate-50/30" colspan="2">Length</th>
+                                    <th class="px-4 py-3 text-right w-20">Qty</th>
+                                    <th class="px-4 py-3 w-8"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="rfq-body" class="divide-y divide-slate-100 bg-white">
+                                <!-- Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+         </div>
+      </div>
+
     </div>
   </div>
 
   <script>
-    const PARSE_URL        = "/api/buyer/parse-request";
-    const CLARIFY_URL      = "/api/buyer/clarify";
-    const UPLOAD_SPECS_URL = "/api/buyer/upload-specs";
+    let currentRfq = null;
+    let attachedFiles = [];
+    const SERVER_URL = "http://localhost:3000/api"; 
 
-    let currentRequest     = null;
-    let supplierQuotes     = [];
-    let supplierUnitPrices = [];
-    let clarifyMessages    = [];
-    let lastRfpDraft       = "";
-    let lastRfpQuote       = null;
-    let isThinking         = false;
-    let supplierPriority   = "pricing";
-
-    const { jsPDF } = window.jspdf || {};
-    const $ = id => document.getElementById(id);
-
-    // ---------- i18n dictionary ----------
-    const I18N_BUYER = {
-      en: {
-        "app.brand": "Crontal",
-        "app.subtitle": "Turn informal descriptions and specs into a structured RFQ you can share with suppliers.",
-        "badge.buyer": "Buyer RFQ",
-
-        "flow.label": "Flow",
-        "flow.step1": "Describe & upload",
-        "flow.step2": "Review & share RFQ",
-        "flow.step3": "Compare quotes & award",
-
-        "btn.guide": "Guide me through this",
-        "btn.send": "Send",
-        "btn.copy": "Copy",
-        "btn.refresh": "Refresh",
-        "btn.generateAward": "Generate award email",
-        "btn.close": "Close",
-        "btn.download": "Download PDF",
-
-        "col.left.title": "Build request",
-        "col.left.desc": "Describe what you need and upload specs. Crontal will draft the RFQ for you.",
-        "col.right.title": "Review & decide",
-        "col.right.desc": "Edit the RFQ, share it with suppliers, compare quotes, and generate an award package.",
-
-        "section.upload.title": "Upload design / spec files",
-        "section.upload.subtitle": "Upload engineering PDFs and Excel tech specs to auto-generate line items.",
-        "section.upload.filesLabel": "Files",
-        "section.upload.filesHelp": "Supported now: engineering PDFs (.pdf) and tech spec spreadsheets (.xls, .xlsx). Max 5 files per run.",
-        "section.upload.button": "Parse files into line items",
-
-        "section.chat.title": "Describe what you need",
-        "section.chat.subtitle": "Use plain language. Crontal will turn this into a structured RFQ on the right.",
-        "section.chat.label": "Conversation",
-
-        "section.award.stepLabel": "Step 3 · Award email & PDF",
-        "section.award.subtitle": "Once you’ve picked a supplier, draft the award email and export the full RFQ as a PDF.",
-        "section.award.frameSubtitle": "After choosing a supplier, generate the award email and PDF documents from here.",
-
-
-        "section.rfq.title": "Step 2 · RFQ summary for suppliers",
-        "section.rfq.subtitle": "This is what suppliers will see when you share the request link. Edit any field before sending.",
-        "section.rfq.requestIdLabel": "Request ID",
-        "section.rfq.empty": "No RFQ yet. Start by describing what you need or uploading files on the left.",
-        "section.rfq.lineHeader": "Line items (editable)",
-        "section.rfq.frameSubtitle": "Check the RFQ details that suppliers will see, then send them the link to respond.",
-
-
-        "table.line": "Line",
-        "table.description": "Description",
-        "table.grade": "Grade",
-        "table.qty": "Qty",
-        "table.uom": "UoM",
-        "table.size": "Size",
-
-        "rfq.destination": "Destination",
-        "rfq.incoterm": "Incoterm",
-        "rfq.payment": "Payment terms",
-        "rfq.otherReqLabel": "Other requirements (optional)",
-
-        "section.share.stepLabel": "Step 2 · Share request link",
-        "section.share.subtitle": "Once your RFQ looks right, share this link with suppliers so they can respond.",
-        "section.share.blockLabel": "Request link",
-        "section.share.blockHint": "Send this link by email or chat. Suppliers will see your RFQ in their Crontal portal.",
-
-        "section.quotes.title": "Step 3 · Supplier responses",
-        "section.quotes.subtitle": "As suppliers respond, their offers will appear here and be ranked based on your selected priority.",
-        "section.quotes.empty": "No supplier quotes yet. Share the request link above, then click Refresh.",
-        "section.quotes.frameSubtitle": "As suppliers respond, compare their prices, delivery, and payment terms here.",
-        "quotes.countLabel": "Count",
-
-        "rank.label": "Rank by:",
-        "rank.pricing": "Pricing",
-        "rank.delivery": "Delivery",
-        "rank.payment": "Payment terms",
-
-        "pdf.preview.title": "RFP PDF preview",
-        "pdf.preview.subtitle": "This is the content that will be exported to PDF with signature lines.",
-        "pdf.preview.help": "Click “Download PDF” to save a copy with signature areas.",
-
-        "chat.placeholder": "Example: 20 pcs 304L tubes, 2'' OD, 6m, CIF Houston, Net 30...",
-        "award.placeholder": "Award email will appear here after you click “Generate award email”.",
-        "otherReq.placeholder": "Documentation, standards, QA/inspection, packaging, special notes...",
-        
-        "chat.seed1": "Hi! I’m Crontal’s RFQ assistant. Tell me what you’d like to buy (sizes, grades, quantities, delivery location, payment terms), and I’ll turn it into a structured table on the right that you can edit.",
-        "chat.seed2": "I’ve parsed your uploaded files into {count} structured line item(s). You can refine specs here or tell me about destination, delivery dates, and payment terms.",
-
-      },
-      es: {
-        "app.brand": "Crontal",
-        "app.subtitle": "Convierte descripciones informales y planos en un RFQ estructurado que puedas compartir con proveedores.",
-        "badge.buyer": "RFQ del comprador",
-
-        "flow.label": "Flujo",
-        "flow.step1": "Describir y cargar",
-        "flow.step2": "Revisar y compartir RFQ",
-        "flow.step3": "Comparar ofertas y adjudicar",
-
-        "btn.guide": "Guíame paso a paso",
-        "btn.send": "Enviar",
-        "btn.copy": "Copiar",
-        "btn.refresh": "Actualizar",
-        "btn.generateAward": "Generar correo de adjudicación",
-        "btn.close": "Cerrar",
-        "btn.download": "Descargar PDF",
-
-        "col.left.title": "Crear solicitud",
-        "col.left.desc": "Describe lo que necesitas y carga las especificaciones. Crontal redactará el RFQ por ti.",
-        "col.right.title": "Revisar y decidir",
-        "col.right.desc": "Edita el RFQ, compártelo con proveedores, compara ofertas y genera el paquete de adjudicación.",
-
-        "section.upload.title": "Subir planos / archivos de especificaciones",
-        "section.upload.subtitle": "Sube PDFs de ingeniería y hojas de especificaciones para generar partidas automáticamente.",
-        "section.upload.filesLabel": "Archivos",
-        "section.upload.filesHelp": "Formatos admitidos: PDF de ingeniería (.pdf) y hojas de especificaciones (.xls, .xlsx). Máx. 5 archivos por ejecución.",
-        "section.upload.button": "Convertir archivos en partidas",
-
-        "section.chat.title": "Describe lo que necesitas",
-        "section.chat.subtitle": "Usa lenguaje natural. Crontal lo convertirá en un RFQ estructurado en la parte derecha.",
-        "section.chat.label": "Conversación",
-
-        "section.award.stepLabel": "Paso 3 · Correo de adjudicación y PDF",
-        "section.award.subtitle": "Una vez elegido el proveedor, redacta el correo de adjudicación y exporta el RFQ completo en PDF.",
-
-        "section.rfq.title": "Paso 2 · Resumen de RFQ para proveedores",
-        "section.rfq.subtitle": "Esto es lo que verán los proveedores cuando compartas el enlace. Puedes editar cualquier campo antes de enviarlo.",
-        "section.rfq.requestIdLabel": "ID de la solicitud",
-        "section.rfq.empty": "Aún no hay RFQ. Empieza describiendo lo que necesitas o subiendo archivos a la izquierda.",
-        "section.rfq.lineHeader": "Partidas (editables)",
-
-        "table.line": "Línea",
-        "table.description": "Descripción",
-        "table.grade": "Calidad",
-        "table.qty": "Cant.",
-        "table.uom": "Unidad",
-        "table.size": "Medida",
-
-        "rfq.destination": "Destino",
-        "rfq.incoterm": "Incoterm",
-        "rfq.payment": "Condiciones de pago",
-        "rfq.otherReqLabel": "Otros requisitos (opcional)",
-
-        "section.share.stepLabel": "Paso 2 · Compartir enlace de solicitud",
-        "section.share.subtitle": "Cuando el RFQ esté listo, comparte este enlace con los proveedores para que coticen.",
-        "section.share.blockLabel": "Enlace de solicitud",
-        "section.share.blockHint": "Envía este enlace por correo o chat. Los proveedores verán tu RFQ en el portal de Crontal.",
-
-        "section.quotes.title": "Paso 3 · Respuestas de proveedores",
-        "section.quotes.subtitle": "Cuando los proveedores respondan, sus ofertas aparecerán aquí y se ordenarán según la prioridad que elijas.",
-        "section.quotes.empty": "Todavía no hay ofertas. Comparte el enlace de solicitud y luego haz clic en Actualizar.",
-        "quotes.countLabel": "Número",
-
-        "rank.label": "Ordenar por:",
-        "rank.pricing": "Precio",
-        "rank.delivery": "Entrega",
-        "rank.payment": "Pago",
-
-        "pdf.preview.title": "Vista previa del PDF del RFQ",
-        "pdf.preview.subtitle": "Este es el contenido que se exportará a PDF con espacios para firmas.",
-        "pdf.preview.help": "Haz clic en “Descargar PDF” para guardar una copia con áreas de firma.",
-
-        "chat.placeholder": "Ejemplo: 20 uds de tubos 304L, 2'' OD, 6 m, CIF Houston, pago a 30 días...",
-        "award.placeholder": "El correo de adjudicación aparecerá aquí cuando hagas clic en “Generar correo de adjudicación”.",
-        "otherReq.placeholder": "Documentación, normas, QA/inspección, embalaje, notas especiales...",
-        
-        "chat.seed1": "¡Hola! Soy el asistente de RFQ de Crontal. Cuéntame qué deseas comprar (tamaños, calidades, cantidades, lugar de entrega, condiciones de pago) y lo convertiré en una tabla estructurada a la derecha.",
-        "chat.seed2": "He analizado tus archivos y he generado {count} partidas estructuradas. Puedes afinar las especificaciones aquí o contarme destino, fechas de entrega y condiciones de pago.",
-
-      
-      },
-      zh: {
-        "app.brand": "Crontal",
-        "app.subtitle": "把零散的描述和图纸信息整理成结构化的询价单，方便统一发给供应商。",
-        "badge.buyer": "采购询价单（买方）",
-
-        "flow.label": "流程",
-        "flow.step1": "描述需求并上传文件",
-        "flow.step2": "检查并分享询价单",
-        "flow.step3": "对比报价并选择中标方",
-
-        "btn.guide": "引导我一步步操作",
-        "btn.send": "发送",
-        "btn.copy": "复制",
-        "btn.refresh": "刷新",
-        "btn.generateAward": "生成授标邮件",
-        "btn.close": "关闭",
-        "btn.download": "下载 PDF",
-
-        "col.left.title": "创建询价需求",
-        "col.left.desc": "说明你的采购需求并上传规格文件，Crontal 会帮你生成 RFQ 草稿。",
-        "col.right.title": "审核并决策",
-        "col.right.desc": "在发送给供应商之前检查 RFQ，随后对比报价并生成授标文件。",
-
-        "section.upload.title": "上传图纸 / 规格文件",
-        "section.upload.subtitle": "上传工程 PDF 或规格表，系统会自动生成物料行。",
-        "section.upload.filesLabel": "文件",
-        "section.upload.filesHelp": "目前支持工程 PDF（.pdf）和规格表（.xls, .xlsx），每次最多 5 个文件。",
-        "section.upload.button": "解析文件生成物料行",
-
-        "section.chat.title": "说明你的采购需求",
-        "section.chat.subtitle": "用自然语言描述即可，Crontal 会在右侧生成结构化的 RFQ。",
-        "section.chat.label": "对话",
-
-        "section.award.stepLabel": "步骤三 · 授标邮件与 PDF",
-        "section.award.subtitle": "选定供应商后，在这里生成授标邮件，并导出完整 RFQ PDF。",
-
-        "section.rfq.title": "步骤二 · 发给供应商的 RFQ 摘要",
-        "section.rfq.subtitle": "供应商打开链接时会看到这些内容，你可以在发送前修改任何字段。",
-        "section.rfq.requestIdLabel": "询价单编号",
-        "section.rfq.empty": "尚未生成 RFQ。请先在左侧描述需求或上传文件。",
-        "section.rfq.lineHeader": "物料行（可编辑）",
-
-        "table.line": "行号",
-        "table.description": "描述",
-        "table.grade": "材质",
-        "table.qty": "数量",
-        "table.uom": "单位",
-        "table.size": "规格",
-
-        "rfq.destination": "目的地",
-        "rfq.incoterm": "贸易条款",
-        "rfq.payment": "付款条件",
-        "rfq.otherReqLabel": "其他要求（可选）",
-
-        "section.share.stepLabel": "步骤二 · 分享询价链接",
-        "section.share.subtitle": "当 RFQ 信息确认无误后，将此链接发给供应商，让他们在线报价。",
-        "section.share.blockLabel": "询价链接",
-        "section.share.blockHint": "通过邮件或聊天把此链接发给供应商，他们会在 Crontal 供应商门户中看到 RFQ。",
-
-        "section.quotes.title": "步骤三 · 供应商报价",
-        "section.quotes.subtitle": "供应商的报价会出现在这里，你可以按照价格、交期或付款条件进行排序。",
-        "section.quotes.empty": "暂时没有报价。请先把链接发给供应商，然后点击“刷新”。",
-        "quotes.countLabel": "数量",
-
-        "rank.label": "排序依据：",
-        "rank.pricing": "价格",
-        "rank.delivery": "交期",
-        "rank.payment": "付款条件",
-
-        "pdf.preview.title": "RFQ PDF 预览",
-        "pdf.preview.subtitle": "这里是导出 PDF 时显示的内容，并包含签字位置。",
-        "pdf.preview.help": "点击“下载 PDF”，保存带签字区域的文件。",
-
-        "chat.placeholder": "示例：20 支 304L 不锈钢管，2'' 外径，6 米，CIF 休斯顿，账期 30 天……",
-        "award.placeholder": "点击“生成授标邮件”后，这里会显示邮件内容。",
-        "otherReq.placeholder": "文件要求、执行标准、质检、包装方式、特殊说明等……",
-      
-        "chat.seed1": "你好，我是 Crontal 的询价助手。请告诉我你的采购需求（规格、材质、数量、送货地点、付款条件等），我会在右侧生成一份可编辑的结构化询价表。",
-        "chat.seed2": "我已经根据你上传的文件生成了 {count} 条结构化物料行。你可以在这里细化规格，或者补充目的地、交货时间和付款条件。",
-      }
-    };
-
+    // Listeners
+    document.getElementById('send-btn').addEventListener('click', handleSend);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => e.key === 'Enter' && handleSend());
+    document.getElementById('file-input').addEventListener('change', handleFileSelect);
     
-
-    let currentLangBuyer = "en";
-
-    function tBuyer(key) {
-      return I18N_BUYER[currentLangBuyer]?.[key] ||
-             I18N_BUYER.en[key] ||
-             key;
-    }
-
-    function applyBuyerLanguage(lang) {
-      currentLangBuyer = lang;
-
-      document.querySelectorAll("[data-i18n]").forEach(el => {
-        const key = el.dataset.i18n;
-        el.textContent = tBuyer(key);
-      });
-
-      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
-        const key = el.dataset.i18nPlaceholder;
-        el.placeholder = tBuyer(key);
-      });
-
-      // If user hasn't typed anything yet, reset seed messages in the new language
-      const hasUserMessages = clarifyMessages.some(m => m.role === "user");
-      if (!hasUserMessages) {
-        // Try to keep the current count if we already parsed items
-        const count = currentRequest?.items?.length || 0;
-        seedChat(count);
-      }
-
-      // dynamic empty texts
-      const emptyRFQ = $("buyer-request-empty");
-      if (emptyRFQ) emptyRFQ.textContent = tBuyer("section.rfq.empty");
-      const quotesEmpty = $("quotes-empty");
-      if (quotesEmpty) quotesEmpty.textContent = tBuyer("section.quotes.empty");
-    }
-
-    function setBuyerJourneyStep(step) {
-      const s1 = $("buyer-step-1");
-      const s2 = $("buyer-step-2");
-      const s3 = $("buyer-step-3");
-      [s1, s2, s3].forEach((el, idx) => {
-        if (!el) return;
-        const n = idx + 1;
-        el.classList.remove("journey-step-active", "journey-step-inactive");
-        el.classList.add(n === step ? "journey-step-active" : "journey-step-inactive");
-      });
-    }
-
-    function mapBackendToCurrentRequest(data, rawText) {
-      const rfqId     = data.rfq_id || ("RFQ-" + Date.now());
-      const lineItems = Array.isArray(data.line_items) ? data.line_items : [];
-
-      const items = lineItems.map((li, idx) => {
-        const size = li.size || {};
-        const od   = size.outer_diameter || {};
-        const wt   = size.wall_thickness || {};
-        const len  = size.length || {};
-
-        const sizeParts = [];
-        if (od.value != null) sizeParts.push(`${od.value}${od.unit ? " " + od.unit : ""}`);
-        if (wt.value != null) sizeParts.push(`WT ${wt.value}${wt.unit ? " " + wt.unit : ""}`);
-        if (len.value != null) sizeParts.push(`${len.value}${len.unit ? " " + len.unit : ""}`);
-
-        return {
-          line: idx + 1,
-          description: li.product_type || li.raw_description || `Line ${idx + 1}`,
-          grade: li.material_grade || "",
-          quantity: li.quantity ?? null,
-          uom: li.unit || "",
-          sizeText: sizeParts.join(" · ")
-        };
-      });
-
-      let otherReq = "";
-      lineItems.forEach(li => {
-        if (Array.isArray(li.other_requirements) && li.other_requirements.length) {
-          otherReq += (otherReq ? "; " : "") + li.other_requirements.join("; ");
-        }
-      });
-
-      const first = lineItems[0] || {};
-      const commercial = {
-        destination: first.delivery_location || "",
-        incoterm:    first.incoterm || "",
-        paymentTerm: first.payment_terms || "",
-        otherRequirements: otherReq
-      };
-
-      return {
-        id: rfqId,
-        raw: rawText,
-        items,
-        commercial
-      };
-    }
-
-    function renderChat() {
-      const win = $("chat-window");
-      let html = clarifyMessages.map(m => {
-        const isUser = m.role === "user";
-        return `
-          <div class="flex ${isUser ? "justify-end" : "justify-start"}">
-            <div class="max-w-[85%] rounded-xl px-3 py-2 text-[11px] break-words ${
-              isUser
-                ? "bg-accent/10 text-slate-900 border border-accent/40"
-                : "bg-white border border-slate-200 text-slate-800"
-            }">
-              ${m.content.replace(/\n/g,"<br/>")}
-            </div>
-          </div>`;
-      }).join("");
-
-      if (isThinking) {
-        html += `
-          <div class="flex justify-start">
-            <div class="mt-1 inline-flex items-center gap-1 max-w-[85%] rounded-xl px-3 py-2 text-[11px] bg-white border border-slate-200 text-slate-500">
-              <span>Crontal is thinking</span>
-              <span class="loading-dots">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-              </span>
-            </div>
-          </div>`;
-      }
-
-      win.innerHTML = html;
-      win.scrollTop = win.scrollHeight;
-    }
-
-    function renderBuyerRequest() {
-      const empty   = $("buyer-request-empty");
-      const block   = $("buyer-request-block");
-      const idLabel = $("request-id-label");
-
-      if (!currentRequest) {
-        empty.classList.remove("hidden");
-        block.classList.add("hidden");
-        idLabel.textContent = "None yet";
-        setBuyerJourneyStep(1);
-        return;
-      }
-
-      empty.classList.add("hidden");
-      block.classList.remove("hidden");
-      idLabel.textContent = currentRequest.id;
-
-      const tbody = $("buyer-items-body");
-      tbody.innerHTML = "";
-      currentRequest.items.forEach((item, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="px-3 py-2">${item.line}</td>
-          <td class="px-3 py-2">
-            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
-                   data-index="${idx}" data-field="description"
-                   value="${item.description || ""}" />
-          </td>
-          <td class="px-3 py-2">
-            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
-                   data-index="${idx}" data-field="grade"
-                   value="${item.grade || ""}" />
-          </td>
-          <td class="px-3 py-2">
-            <input class="buyer-item-input w-16 rounded border border-slate-300 px-2 py-1 text-right"
-                   data-index="${idx}" data-field="quantity"
-                   value="${item.quantity ?? ""}" />
-          </td>
-          <td class="px-3 py-2">
-            <input class="buyer-item-input w-16 rounded border border-slate-300 px-2 py-1"
-                   data-index="${idx}" data-field="uom"
-                   value="${item.uom || ""}" />
-          </td>
-          <td class="px-3 py-2">
-            <input class="buyer-item-input w-full rounded border border-slate-300 px-2 py-1"
-                   data-index="${idx}" data-field="sizeText"
-                   value="${item.sizeText || ""}" />
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      $("buyer-destination").textContent =
-        currentRequest.commercial.destination || "–";
-      $("buyer-incoterm").textContent =
-        currentRequest.commercial.incoterm || "–";
-      $("buyer-payment").textContent =
-        currentRequest.commercial.paymentTerm || "–";
-      const otherEl = $("buyer-other-req");
-      if (otherEl) otherEl.value = currentRequest.commercial.otherRequirements || "";
-
-      renderShareLink();
-      loadQuotesFromBackend();
-      setBuyerJourneyStep(2);
-    }
-
-    function renderShareLink() {
-      const block  = $("share-link-block");
-      const label  = $("share-link-label");
-      const input  = $("share-link-input");
-      if (!block || !label || !input) return;
-
-      if (!currentRequest) {
-        block.classList.add("hidden");
-        label.textContent = tBuyer("section.share.subtitle");
-        input.value = "";
-        return;
-      }
-
-      block.classList.remove("hidden");
-      label.textContent = tBuyer("section.share.subtitle");
-
-      currentRequest.id = currentRequest.id || currentRequest.rfq_id || ("RFQ-" + Date.now());
-      const rfqId = currentRequest.id;
-
-      const url = new URL(window.location.origin);
-      url.pathname = "/supplier-demo.html";
-      url.search   = `?rfq_id=${encodeURIComponent(rfqId)}`;
-
-      input.value = url.toString();
-    }
-
-    function parseDaysFromText(text) {
-      if (!text) return NaN;
-      const m1 = text.match(/(\d+)\s*day/i);
-      if (m1) return Number(m1[1]);
-      const m2 = text.match(/net\s*(\d+)/i);
-      if (m2) return Number(m2[1]);
-      return NaN;
-    }
-
-    function getBestSupplierIndex() {
-      if (!supplierQuotes.length) return -1;
-
-      if (supplierPriority === "pricing") {
-        let bestIdx = -1;
-        let bestTotal = Infinity;
-        supplierQuotes.forEach((q, idx) => {
-          if (typeof q.total === "number" && !isNaN(q.total) && q.total < bestTotal) {
-            bestTotal = q.total;
-            bestIdx   = idx;
-          }
+    // Input Listeners for Commercial terms
+    ['comm-dest', 'comm-incoterm', 'comm-payment'].forEach(id => {
+        document.getElementById(id).addEventListener('input', (e) => {
+            if(currentRfq) {
+                const map = {'comm-dest': 'destination', 'comm-incoterm': 'incoterm', 'comm-payment': 'paymentTerm'};
+                currentRfq.commercial[map[id]] = e.target.value;
+            }
         });
-        return bestIdx;
-      }
-
-      if (supplierPriority === "delivery") {
-        let bestIdx = -1;
-        let bestLead = Infinity;
-        supplierQuotes.forEach((q, idx) => {
-          const d = Number(q.leadTime);
-          const lead = isNaN(d) ? Infinity : d;
-          if (lead < bestLead) {
-            bestLead = lead;
-            bestIdx  = idx;
-          }
-        });
-        if (bestIdx !== -1 && bestLead !== Infinity) return bestIdx;
-        supplierPriority = "pricing";
-        return getBestSupplierIndex();
-      }
-
-      if (supplierPriority === "payment") {
-        let bestIdx = -1;
-        let bestDays = -Infinity;
-        supplierQuotes.forEach((q, idx) => {
-          const days = parseDaysFromText(q.payment);
-          if (!isNaN(days) && days > bestDays) {
-            bestDays = days;
-            bestIdx  = idx;
-          }
-        });
-        if (bestIdx !== -1 && bestDays !== -Infinity) return bestIdx;
-        supplierPriority = "pricing";
-        return getBestSupplierIndex();
-      }
-
-      return -1;
-    }
-
-    function renderQuotes() {
-      const countEl = $("quotes-count");
-      const emptyEl = $("quotes-empty");
-      const listEl  = $("quotes-list");
-      if (!countEl || !emptyEl || !listEl) return;
-
-      countEl.textContent = supplierQuotes.length.toString();
-      if (!supplierQuotes.length) {
-        emptyEl.classList.remove("hidden");
-        listEl.classList.add("hidden");
-        listEl.innerHTML = "";
-        setBuyerJourneyStep(currentRequest ? 2 : 1);
-        return;
-      }
-
-      emptyEl.classList.add("hidden");
-      listEl.classList.remove("hidden");
-      listEl.innerHTML = "";
-
-      const bestIdx = getBestSupplierIndex();
-      const priorityLabel =
-        supplierPriority === "pricing"
-          ? tBuyer("rank.pricing")
-          : supplierPriority === "delivery"
-          ? tBuyer("rank.delivery")
-          : tBuyer("rank.payment");
-
-      supplierQuotes.forEach((q, idx) => {
-        const isBest = idx === bestIdx;
-        const card   = document.createElement("div");
-        card.className =
-          "rounded-xl px-3 py-2 border text-xs flex flex-col gap-2 " +
-          (isBest
-            ? "border-accent/70 bg-accent/10"
-            : "border-slate-200 bg-slate-50");
-
-        const totalText =
-          typeof q.total === "number" && !isNaN(q.total)
-            ? `${q.currency || "USD"} ${q.total.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`
-            : "N/A";
-
-        const lineCount = q.items?.length || 1;
-
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="font-medium text-slate-900">
-                ${q.supplierName || "Unnamed supplier"}
-              </p>
-              <p class="mt-0.5 text-[11px] text-slate-600">
-                Total: ${totalText}
-              </p>
-              <p class="mt-0.5 text-[11px] text-slate-500">
-                Lead time: ${q.leadTime || "–"} days · Payment: ${q.payment || "–"} · Validity: ${q.validity || "–"} days
-              </p>
-              <p class="mt-0.5 text-[11px] text-slate-500 line-clamp-2">
-                ${q.notes || "No special conditions."}
-              </p>
-            </div>
-            <div class="text-right text-[11px]">
-              ${
-                isBest
-                  ? `<span class="inline-flex items-center rounded-full bg-accent/10 border border-accent px-2 py-0.5 text-accent font-medium mb-1">Best offer (${priorityLabel})</span>`
-                  : ""
-              }
-              <p class="text-slate-500">
-                Lines: ${lineCount}
-              </p>
-            </div>
-          </div>
-        `;
-        listEl.appendChild(card);
-      });
-
-      setBuyerJourneyStep(3);
-    }
-
-    async function loadQuotesFromBackend() {
-      if (!currentRequest) return;
-      const rfqId = currentRequest.id || currentRequest.rfq_id;
-      if (!rfqId) return;
-
-      try {
-        const res = await fetch(`/api/rfqs/${encodeURIComponent(rfqId)}/quotes`);
-        if (!res.ok) {
-          console.error("Failed to load quotes:", await res.text());
-          return;
-        }
-        const data = await res.json();
-        supplierQuotes = data.quotes || [];
-        renderQuotes();
-      } catch (err) {
-        console.error("Error loading quotes:", err);
-      }
-    }
-
-    async function parseInitial(text) {
-      const res = await fetch(PARSE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, project_name: null })
-      });
-      if (!res.ok) {
-        console.error("Parse error:", res.status, await res.text());
-        return false;
-      }
-      const data = await res.json();
-      currentRequest = mapBackendToCurrentRequest(data, text);
-      renderBuyerRequest();
-      return true;
-    }
-
-    async function reparseWithAdditionalText(extraText) {
-      if (!currentRequest) return;
-      const combinedText =
-        (currentRequest.raw || "") +
-        "\n\nAdditional clarification from buyer:\n" +
-        extraText;
-      const res = await fetch(PARSE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: combinedText, project_name: null })
-      });
-      if (!res.ok) {
-        console.error("Re-parse error:", res.status, await res.text());
-        return;
-      }
-      const data = await res.json();
-      currentRequest = mapBackendToCurrentRequest(data, combinedText);
-      renderBuyerRequest();
-    }
-
-    async function callClarifyAPI(userMessage) {
-      if (!currentRequest) return;
-      const body = {  
-                      rfq: currentRequest,
-                      history: clarifyMessages,
-                      user_message: userMessage || "",
-                      lang: currentLangBuyer || "en"
-                    };
-      const res = await fetch(CLARIFY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        console.error("Clarifier error:", res.status, await res.text());
-        return;
-      }
-      const data = await res.json();
-      if (data.assistant_message) {
-        clarifyMessages.push({ role: "assistant", content: data.assistant_message });
-        renderChat();
-      }
-    }
-
-    async function uploadSpecsAndParse() {
-      const fileInput = $("file-upload-input");
-      if (!fileInput || !fileInput.files || !fileInput.files.length) {
-        setFileUploadStatus("Please select at least one file first.", true);
-        return;
-      }
-
-      const formData = new FormData();
-      Array.from(fileInput.files).forEach(file => formData.append("files", file));
-
-      const btn = $("file-upload-btn");
-      btn.disabled = true;
-      isThinking = true;
-      renderChat();
-      setFileUploadStatus("Uploading and parsing files...");
-
-      try {
-        const res = await fetch(UPLOAD_SPECS_URL, { method: "POST", body: formData });
-        if (!res.ok) {
-          let message = "Parsing failed.";
-          try {
-            const errJson = await res.json();
-            if (errJson && errJson.error) message = errJson.error;
-          } catch {
-            const txt = await res.text().catch(() => "");
-            console.error("upload-specs error (non-JSON):", txt);
-          }
-          console.error("upload-specs error:", message);
-          setFileUploadStatus(message, true);
-          clarifyMessages.push({
-            role: "assistant",
-            content: "I tried to parse the uploaded files but ran into a problem: " + message
-          });
-          renderChat();
-          return;
-        }
-
-        const data = await res.json();
-        const rawText = data.original_text || "";
-        currentRequest = mapBackendToCurrentRequest(data, rawText);
-        renderBuyerRequest();
-        setFileUploadStatus(
-          `Parsed ${currentRequest.items?.length || 0} line item(s) from files.`
-        );
-        
-        const count = currentRequest.items?.length || 0;
-        // replace second seed message so it matches language + actual count
-        if (clarifyMessages.length >= 2 && clarifyMessages[1].seedKey === "chat.seed2") {
-          clarifyMessages[1] = {
-            role: "assistant",
-            seedKey: "chat.seed2",
-            content: tBuyer("chat.seed2").replace("{count}", String(count))
-          };
-        } else {
-          clarifyMessages.push({
-            role: "assistant",
-            seedKey: "chat.seed2",
-            content: tBuyer("chat.seed2").replace("{count}", String(count))
-          });
-        }
-        renderChat();
-
-      } catch (err) {
-        console.error("upload-specs error:", err);
-        setFileUploadStatus("Parsing failed. Network or server error.", true);
-      } finally {
-        btn.disabled = false;
-        isThinking = false;
-        renderChat();
-      }
-    }
-
-    function setFileUploadStatus(msg, isError = false) {
-      const statusEl = $("file-upload-status");
-      if (!statusEl) return;
-      statusEl.textContent = msg || "";
-      statusEl.className =
-        "text-[11px] " + (isError ? "text-red-500" : "text-slate-500");
-    }
-
-    // Seed chat (still in English – can later make this language-aware via tBuyer)
-    // Chat seeding (language-aware)
-    function seedChat(count = 0) {
-      clarifyMessages = [
-        {
-          role: "assistant",
-          seedKey: "chat.seed1",
-          content: tBuyer("chat.seed1")
-        },
-        {
-          role: "assistant",
-          seedKey: "chat.seed2",
-          content: tBuyer("chat.seed2").replace("{count}", String(count))
-        }
-      ];
-      renderChat();
-    }
-    // initial seed
-    seedChat(0);
-    setBuyerJourneyStep(1);
-
-    $("chat-send-btn").addEventListener("click", async () => {
-      const input = $("chat-input");
-      const text = input.value.trim();
-      if (!text) return;
-      input.value = "";
-      clarifyMessages.push({ role: "user", content: text });
-      isThinking = true;
-      $("chat-send-btn").disabled = true;
-      $("chat-input").disabled = true;
-      renderChat();
-
-      try {
-        if (!currentRequest) {
-          const ok = await parseInitial(text);
-          if (ok) await callClarifyAPI(text);
-        } else {
-          await reparseWithAdditionalText(text);
-          await callClarifyAPI(text);
-        }
-      } finally {
-        isThinking = false;
-        $("chat-send-btn").disabled = false;
-        $("chat-input").disabled = false;
-        renderChat();
-      }
     });
 
-    $("chat-input").addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        $("chat-send-btn").click();
-      }
-    });
-
-    $("file-upload-btn").addEventListener("click", e => {
-      e.preventDefault();
-      uploadSpecsAndParse();
-    });
-
-    $("buyer-items-body").addEventListener("input", e => {
-      if (!e.target.classList.contains("buyer-item-input")) return;
-      const idx   = parseInt(e.target.dataset.index, 10);
-      const field = e.target.dataset.field;
-      if (!currentRequest || !currentRequest.items[idx]) return;
-      let value = e.target.value;
-      if (field === "quantity" && value !== "") {
-        const n = Number(value);
-        currentRequest.items[idx][field] = isNaN(n) ? null : n;
-      } else {
-        currentRequest.items[idx][field] = value;
-      }
-    });
-
-    $("buyer-other-req").addEventListener("input", e => {
-      if (!currentRequest) return;
-      currentRequest.commercial.otherRequirements = e.target.value;
-    });
-
-    $("copy-link-btn").addEventListener("click", () => {
-      const input = $("share-link-input");
-      if (!input.value) return;
-      input.select();
-      try { document.execCommand("copy"); alert("Link copied to clipboard."); }
-      catch { alert("Unable to copy automatically. Please copy manually."); }
-    });
-
-    const refreshBtn = $("refresh-quotes-btn");
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", () => {
-        loadQuotesFromBackend();
-      });
-    }
-
-    const pdfDownloadBtn = $("pdf-download-btn");
-    if (pdfDownloadBtn) {
-      pdfDownloadBtn.addEventListener("click", () => {
-        const jspdfLib = window.jspdf;
-        if (!jspdfLib || !jspdfLib.jsPDF) {
-          console.error("jsPDF library is not loaded.");
-          alert("PDF export is not available (jsPDF not loaded).");
-          return;
-        }
-
-        if (!currentRequest || !lastRfpQuote) {
-          alert("Please generate the award email first so we know which supplier is selected.");
-          return;
-        }
-
-        const doc = new jspdfLib.jsPDF({ unit: "pt", format: "a4" });
-
-        const left = 40;
-        const maxW = 515;
-        let y = 40;
-
-        const rfqId    = currentRequest.id || currentRequest.rfq_id || "RFQ";
-        const supplier = lastRfpQuote;
-        const c        = currentRequest.commercial || {};
-        const items    = currentRequest.items || [];
-        const quoteItems = supplier.items || [];
-        const currency = supplier.currency || "USD";
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("Request for Proposal (RFP)", left, y);
-        y += 20;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(11);
-        doc.text(`RFQ ID: ${rfqId}`, left, y); y += 14;
-        doc.text(`Project: ${currentRequest.project_name || "–"}`, left, y); y += 14;
-        doc.text(`Buyer: [Your company name here]`, left, y); y += 14;
-        doc.text(`Selected supplier: ${supplier.supplierName || "N/A"}`, left, y); y += 20;
-
-        doc.setFont("helvetica", "bold");
-        doc.text("Commercial terms", left, y); y += 14;
-        doc.setFont("helvetica", "normal");
-
-        const commercialLines = [
-          `Destination: ${c.destination || "–"}`,
-          `Incoterm: ${c.incoterm || "–"}`,
-          `Payment terms: ${supplier.payment || c.paymentTerm || "–"}`,
-          `Lead time: ${supplier.leadTime || "–"} days`,
-          `Quote validity: ${supplier.validity || "–"} days`
-        ];
-
-        commercialLines.forEach(line => {
-          const wrapped = doc.splitTextToSize(line, maxW);
-          wrapped.forEach(l => {
-            doc.text(l, left, y);
-            y += 12;
-          });
-        });
-        y += 8;
-
-        if (c.otherRequirements) {
-          doc.setFont("helvetica", "bold");
-          doc.text("Other requirements", left, y); y += 12;
-          doc.setFont("helvetica", "normal");
-          const wrappedReq = doc.splitTextToSize(c.otherRequirements, maxW);
-          wrappedReq.forEach(l => {
-            doc.text(l, left, y);
-            y += 12;
-          });
-          y += 8;
-        }
-
-        const tableBody = items.map((item, idx) => {
-          const qi = quoteItems[idx] || {};
-          const unitPrice =
-            typeof qi.unitPrice === "number"
-              ? `${currency} ${qi.unitPrice.toFixed(2)}`
-              : "";
-          const lineTotal =
-            typeof qi.lineTotal === "number"
-              ? `${currency} ${qi.lineTotal.toFixed(2)}`
-              : "";
-
-          return [
-            item.line ?? idx + 1,
-            item.description || "",
-            item.grade || "",
-            item.quantity ?? "",
-            item.uom || "",
-            item.sizeText || "",
-            unitPrice,
-            lineTotal
-          ];
-        });
-
-        if (typeof doc.autoTable === "function") {
-          doc.setFont("helvetica", "bold");
-          doc.text("Line items", left, y); y += 6;
-
-          doc.autoTable({
-            startY: y + 6,
-            head: [[
-              "Line",
-              "Description",
-              "Grade",
-              "Qty",
-              "UoM",
-              "Size",
-              "Unit price",
-              "Line total"
-            ]],
-            body: tableBody,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [51, 65, 85], textColor: 255 },
-            margin: { left }
-          });
-
-          y = doc.lastAutoTable.finalY + 16;
-        } else {
-          doc.setFont("helvetica", "bold");
-          doc.text("Line items", left, y); y += 14;
-          doc.setFont("helvetica", "normal");
-          tableBody.forEach(row => {
-            const line = `${row[0]}. ${row[1]} – Qty ${row[3]} ${row[4]}`;
-            const wrapped = doc.splitTextToSize(line, maxW);
-            wrapped.forEach(l => {
-              if (y > 760) { doc.addPage(); y = 40; }
-              doc.text(l, left, y);
-              y += 12;
+    function handleFileSelect(e) {
+        attachedFiles = Array.from(e.target.files);
+        const preview = document.getElementById('file-preview');
+        preview.innerHTML = '';
+        if (attachedFiles.length > 0) {
+            preview.classList.remove('hidden');
+            attachedFiles.forEach(f => {
+                const badge = document.createElement('div');
+                badge.className = "text-[10px] bg-white border border-slate-200 px-2 py-1 rounded shadow-sm flex items-center gap-1";
+                badge.innerHTML = `<span>${f.name}</span>`;
+                preview.appendChild(badge);
             });
-          });
-          y += 16;
+        } else {
+            preview.classList.add('hidden');
         }
-
-        doc.setFont("helvetica", "bold");
-        const totalText =
-          typeof supplier.total === "number"
-            ? `${currency} ${supplier.total.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`
-            : "N/A";
-        doc.text(`Estimated total value: ${totalText}`, left, y); y += 20;
-
-        if (lastRfpDraft) {
-          doc.setFont("helvetica", "bold");
-          doc.text("Narrative RFP details", left, y); y += 14;
-          doc.setFont("helvetica", "normal");
-          const wrapped = doc.splitTextToSize(lastRfpDraft, maxW);
-          wrapped.forEach(line => {
-            if (y > 760) { doc.addPage(); y = 40; }
-            doc.text(line, left, y);
-            y += 12;
-          });
-          y += 16;
-        }
-
-        if (y > 700) { doc.addPage(); y = 60; }
-        doc.setFont("helvetica", "bold");
-        doc.text("Signatures", left, y); y += 14;
-        doc.setFont("helvetica", "normal");
-        doc.text("Buyer signature: ______________________      Date: ____________", left, y); y += 20;
-        doc.text("Supplier signature: ____________________   Date: ____________", left, y);
-
-        const filename = `RFP_${rfqId}.pdf`;
-        doc.save(filename);
-
-        const modal = $("pdf-modal");
-        if (modal) modal.classList.add("hidden");
-      });
     }
 
-    const pdfModal = $("pdf-modal");
-    const pdfModalClose = $("pdf-modal-close");
-    if (pdfModal && pdfModalClose) {
-      pdfModalClose.addEventListener("click", () => {
-        pdfModal.classList.add("hidden");
-      });
+    function addMessage(role, content, isLoading = false) {
+        const container = document.getElementById('chat-messages');
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${
+            role === 'user' 
+            ? 'bg-slate-900 text-white rounded-br-sm' 
+            : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm'
+        }`;
+
+        if (isLoading) {
+            bubble.id = 'loading-bubble';
+            bubble.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-slate-500">Analyzing...</span>
+                    <div class="flex space-x-1">
+                        <div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce"></div>
+                        <div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-75"></div>
+                        <div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-150"></div>
+                    </div>
+                </div>`;
+        } else {
+            bubble.innerText = content;
+        }
+
+        wrapper.appendChild(bubble);
+        container.appendChild(wrapper);
+        container.scrollTop = container.scrollHeight;
     }
 
-    const priorityButtons = {
-      pricing:  $("priority-pricing"),
-      delivery: $("priority-delivery"),
-      payment:  $("priority-payment")
+    async function handleSend() {
+        const inputEl = document.getElementById('chat-input');
+        const text = inputEl.value.trim();
+        if (!text && attachedFiles.length === 0) return;
+
+        addMessage('user', text || `[Sent ${attachedFiles.length} files]`);
+        inputEl.value = '';
+        document.getElementById('file-preview').classList.add('hidden');
+        document.getElementById('file-preview').innerHTML = '';
+
+        // Loading state
+        addMessage('assistant', '', true);
+
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('lang', document.getElementById('lang-selector').value);
+        
+        if (currentRfq) {
+            formData.append('rfqId', currentRfq.rfq_id);
+            formData.append('projectName', currentRfq.project_name);
+            formData.append('currentLineItems', JSON.stringify(currentRfq.line_items));
+        }
+        
+        attachedFiles.forEach(f => formData.append('files', f));
+        attachedFiles = [];
+
+        try {
+            const res = await fetch(`${SERVER_URL}/buyer/parse`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await res.json();
+            
+            // Remove loading bubble
+            document.getElementById('loading-bubble').parentElement.remove();
+
+            if (data.error) throw new Error(data.error);
+
+            currentRfq = data;
+            renderRfq(data);
+
+            // Get Chat Confirmation
+            if (currentRfq) {
+                const clarifyRes = await fetch(`${SERVER_URL}/buyer/clarify`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        rfq: currentRfq,
+                        userMessage: text,
+                        lang: document.getElementById('lang-selector').value
+                    })
+                });
+                const clarifyData = await clarifyRes.json();
+                addMessage('assistant', clarifyData.message);
+            }
+
+        } catch (err) {
+            document.getElementById('loading-bubble')?.parentElement.remove();
+            addMessage('assistant', 'Sorry, an error occurred: ' + err.message);
+        }
+    }
+
+    function renderRfq(rfq) {
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('rfq-content').classList.remove('hidden');
+        
+        document.getElementById('rfq-id-display').innerText = `#${rfq.rfq_id}`;
+        
+        // Commercials
+        document.getElementById('comm-dest').value = rfq.commercial.destination || '';
+        document.getElementById('comm-incoterm').value = rfq.commercial.incoterm || '';
+        document.getElementById('comm-payment').value = rfq.commercial.paymentTerm || '';
+
+        // Buttons
+        document.getElementById('btn-pdf').disabled = false;
+        document.getElementById('btn-share').disabled = false;
+
+        const tbody = document.getElementById('rfq-body');
+        tbody.innerHTML = '';
+
+        rfq.line_items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 transition-colors group";
+            
+            // Helpers for null safety
+            const val = (v) => v === null || v === undefined ? '' : v;
+
+            tr.innerHTML = `
+                <td class="px-4 py-2.5 text-center text-slate-400 bg-slate-50/30 border-r border-slate-50 font-mono text-[10px]">${item.line}</td>
+                <td class="px-4 py-2.5"><input value="${val(item.description)}" class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 text-slate-700 font-medium outline-none" onchange="updateItem(${idx}, 'description', this.value)"></td>
+                <td class="px-4 py-2.5"><input value="${val(item.material_grade)}" class="w-16 bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 text-slate-600 outline-none" onchange="updateItem(${idx}, 'material_grade', this.value)"></td>
+                
+                <td class="px-1 py-2.5 text-right border-l border-slate-50"><input type="number" value="${val(item.size.outer_diameter.value)}" class="w-12 text-right bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 font-mono outline-none" onchange="updateDim(${idx}, 'outer_diameter', 'value', this.value)"></td>
+                <td class="px-1 py-2.5 border-r border-slate-50"><input value="${val(item.size.outer_diameter.unit)}" class="w-8 text-[10px] bg-transparent text-slate-400 outline-none" onchange="updateDim(${idx}, 'outer_diameter', 'unit', this.value)"></td>
+
+                <td class="px-1 py-2.5 text-right"><input type="number" value="${val(item.size.wall_thickness.value)}" class="w-12 text-right bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 font-mono outline-none" onchange="updateDim(${idx}, 'wall_thickness', 'value', this.value)"></td>
+                <td class="px-1 py-2.5 border-r border-slate-50"><input value="${val(item.size.wall_thickness.unit)}" class="w-8 text-[10px] bg-transparent text-slate-400 outline-none" onchange="updateDim(${idx}, 'wall_thickness', 'unit', this.value)"></td>
+
+                <td class="px-1 py-2.5 text-right"><input type="number" value="${val(item.size.length.value)}" class="w-12 text-right bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 font-mono outline-none" onchange="updateDim(${idx}, 'length', 'value', this.value)"></td>
+                <td class="px-1 py-2.5 border-r border-slate-50"><input value="${val(item.size.length.unit)}" class="w-8 text-[10px] bg-transparent text-slate-400 outline-none" onchange="updateDim(${idx}, 'length', 'unit', this.value)"></td>
+
+                <td class="px-4 py-2.5 text-right">
+                    <div class="flex justify-end gap-1">
+                        <input type="number" value="${val(item.quantity)}" class="w-12 text-right bg-transparent border border-transparent hover:border-slate-200 focus:bg-white rounded px-1 py-0.5 font-bold text-slate-700 outline-none" onchange="updateItem(${idx}, 'quantity', this.value)">
+                        <input value="${val(item.uom)}" class="w-8 text-[10px] bg-transparent text-slate-400 outline-none" onchange="updateItem(${idx}, 'uom', this.value)">
+                    </div>
+                </td>
+                <td class="px-4 py-2.5 text-center">
+                    <button onclick="deleteItem(${idx})" class="text-slate-300 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.updateItem = (idx, field, val) => {
+        if (field === 'quantity') val = Number(val);
+        currentRfq.line_items[idx][field] = val;
     };
 
-    function setPriority(p) {
-      supplierPriority = p;
-      Object.entries(priorityButtons).forEach(([key, btn]) => {
-        if (!btn) return;
-        if (key === p) btn.classList.add("priority-active");
-        else btn.classList.remove("priority-active");
-      });
-      renderQuotes();
-    }
-
-    if (priorityButtons.pricing)  priorityButtons.pricing.addEventListener("click",  () => setPriority("pricing"));
-    if (priorityButtons.delivery) priorityButtons.delivery.addEventListener("click", () => setPriority("delivery"));
-    if (priorityButtons.payment)  priorityButtons.payment.addEventListener("click", () => setPriority("payment"));
-    setPriority("pricing");
-
-    $("generate-rfp-btn").addEventListener("click", () => {
-      const output = $("rfp-output");
-      if (!output) {
-        console.error("rfp-output textarea not found.");
-        return;
-      }
-
-      if (!currentRequest) {
-        output.value =
-          "Please finalize a structured request and have at least one supplier quote before generating the award email.";
-        return;
-      }
-
-      if (!supplierQuotes || !supplierQuotes.length) {
-        output.value =
-          "No supplier quotes yet. Once you have at least one quote, Crontal can draft an award email for the top-ranked supplier.";
-        return;
-      }
-
-      const idx = typeof getBestSupplierIndex === "function"
-        ? getBestSupplierIndex()
-        : 0;
-
-      if (idx === -1) {
-        output.value =
-          "Cannot determine the top supplier for the current priority. Please make sure at least one quote has price and terms.";
-        return;
-      }
-
-      const target = supplierQuotes[idx];
-      const items  = currentRequest.items || [];
-      const first  = items[0] || {};
-      const c      = currentRequest.commercial || {};
-
-      const lineSummary =
-        items.length === 1
-          ? (first.description || "stainless products")
-          : `${items.length} line items (including ${first.description || "stainless products"})`;
-
-      const totalText =
-        typeof target.total === "number"
-          ? `${target.currency || "USD"} ${target.total.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}`
-          : "N/A";
-
-      const rfqId    = currentRequest.id || currentRequest.rfq_id || "reference";
-      const subject  = `Award – RFQ ${rfqId} – ${first.description || "stainless steel products"}`;
-      const delivery = c.destination || "-";
-      const incoterm = c.incoterm || "Incoterm TBD";
-      const leadTime = target.leadTime || "–";
-      const payment  = target.payment || c.paymentTerm || "-";
-      const validity = target.validity || "–";
-
-      const awardEmail = `
-Subject: ${subject}
-
-Dear ${target.supplierName || "Supplier"},
-
-Thank you for your quotation submitted via Crontal for RFQ ${rfqId}. Based on your pricing and commercial terms, we would like to proceed with your offer as the selected supplier.
-
-Summary of the award:
-• RFQ: ${rfqId}
-• Scope: ${lineSummary}
-• Estimated total value: ${totalText}
-• Delivery: ${delivery} (${incoterm})
-• Lead time: ${leadTime} days
-• Payment terms: ${payment}
-• Quote validity: ${validity} days
-
-We have attached the formal RFQ / award document in PDF format reflecting these terms. Please review the attached document, confirm acceptance in writing, and let us know if you have any questions or required clarifications.
-
-Best regards,
-[Your name]
-[Your company]`.trim();
-
-      lastRfpDraft = awardEmail;
-      lastRfpQuote = target;
-
-      output.value = awardEmail;
-
-      const previewEl = $("pdf-preview-text");
-      if (previewEl) previewEl.textContent = awardEmail;
-
-      const modal = $("pdf-modal");
-      if (modal) modal.classList.remove("hidden");
-
-      setBuyerJourneyStep(3);
-    });
-
-    // Walkthrough engine
-    const walkthroughState = {
-      steps: [],
-      index: 0,
-      role: null
+    window.updateDim = (idx, type, field, val) => {
+        if (field === 'value') val = Number(val);
+        currentRfq.line_items[idx].size[type][field] = val;
     };
 
-    function clearHighlight() {
-      document.querySelectorAll(".tour-highlight").forEach(el => {
-        el.classList.remove("tour-highlight");
-      });
-    }
+    window.deleteItem = (idx) => {
+        currentRfq.line_items.splice(idx, 1);
+        // Reindex
+        currentRfq.line_items.forEach((item, i) => item.line = i + 1);
+        renderRfq(currentRfq);
+    };
 
-    function positionWalkthroughBox(target) {
-      const overlay = $("walkthrough-overlay");
-      const box = $("walkthrough-box");
-      if (!overlay || !box || !target) return;
+    window.shareLink = () => {
+        if (!currentRfq) return;
+        const url = `${window.location.origin}/supplier-demo.html?id=${currentRfq.rfq_id}`;
+        navigator.clipboard.writeText(url);
+        alert("Supplier Link Copied to Clipboard:\n" + url);
+    };
 
-      overlay.classList.remove("hidden");
+    window.downloadPDF = () => {
+        if (!currentRfq) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        let y = 20;
+        doc.setFontSize(18);
+        doc.text("Request for Quotation", 14, y);
+        y+=10;
+        doc.setFontSize(10);
+        doc.text(`RFQ ID: ${currentRfq.rfq_id}`, 14, y); y+=6;
+        doc.text(`Dest: ${currentRfq.commercial.destination || '-'}`, 14, y); y+=6;
+        doc.text(`Incoterm: ${currentRfq.commercial.incoterm || '-'}`, 14, y); y+=6;
+        doc.text(`Payment: ${currentRfq.commercial.paymentTerm || '-'}`, 14, y); y+=10;
 
-      const rect = target.getBoundingClientRect();
-      const padding = 12;
-      const boxWidth = box.offsetWidth;
+        const head = [['Line', 'Desc', 'Grade', 'Qty', 'UOM', 'OD', 'WT', 'Len']];
+        const body = currentRfq.line_items.map(i => [
+            i.line,
+            i.description,
+            i.material_grade,
+            i.quantity,
+            i.uom,
+            `${i.size.outer_diameter.value || ''} ${i.size.outer_diameter.unit || ''}`,
+            `${i.size.wall_thickness.value || ''} ${i.size.wall_thickness.unit || ''}`,
+            `${i.size.length.value || ''} ${i.size.length.unit || ''}`
+        ]);
 
-      let top = rect.bottom + padding;
-      let left = rect.left;
+        doc.autoTable({
+            startY: y,
+            head: head,
+            body: body,
+            theme: 'grid',
+            styles: { fontSize: 8 }
+        });
 
-      const maxLeft = window.innerWidth - boxWidth - 16;
-      if (left > maxLeft) left = maxLeft;
-      if (left < 8) left = 8;
-
-      const bottomY = top + box.offsetHeight;
-      const viewportBottom = window.innerHeight;
-      if (bottomY > viewportBottom - 16) {
-        top = rect.top - box.offsetHeight - padding;
-        if (top < 8) {
-          top = 16;
-        }
-      }
-
-      box.style.top = `${top}px`;
-      box.style.left = `${left}px`;
-    }
-
-    function showWalkthroughStep() {
-      const overlay = $("walkthrough-overlay");
-      const textEl = $("walkthrough-text");
-      const indicator = $("walkthrough-step-indicator");
-      if (!overlay || !textEl || !indicator) return;
-
-      clearHighlight();
-
-      const steps = walkthroughState.steps;
-      const i = walkthroughState.index;
-      if (!steps || i >= steps.length) {
-        overlay.classList.add("hidden");
-        return;
-      }
-
-      const step = steps[i];
-      const target = document.querySelector(step.selector);
-
-      if (!target) {
-        walkthroughState.index += 1;
-        showWalkthroughStep();
-        return;
-      }
-
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.classList.add("tour-highlight");
-      textEl.textContent = step.text;
-      indicator.textContent = `Step ${i + 1} of ${steps.length}`;
-
-      setTimeout(() => positionWalkthroughBox(target), 250);
-    }
-
-    function startWalkthrough(role, steps) {
-      walkthroughState.role = role;
-      walkthroughState.steps = steps;
-      walkthroughState.index = 0;
-      showWalkthroughStep();
-    }
-
-    const wtNext = $("walkthrough-next");
-    const wtSkip = $("walkthrough-skip");
-    if (wtNext) {
-      wtNext.addEventListener("click", () => {
-        walkthroughState.index += 1;
-        showWalkthroughStep();
-      });
-    }
-    if (wtSkip) {
-      wtSkip.addEventListener("click", () => {
-        const overlay = $("walkthrough-overlay");
-        if (overlay) overlay.classList.add("hidden");
-        clearHighlight();
-      });
-    }
-
-    window.addEventListener("resize", () => {
-      const overlay = $("walkthrough-overlay");
-      if (overlay && !overlay.classList.contains("hidden") && walkthroughState.steps.length) {
-        const step = walkthroughState.steps[walkthroughState.index];
-        const target = document.querySelector(step.selector);
-        if (target) positionWalkthroughBox(target);
-      }
-    });
-
-    const buyerTourSteps = [
-      {
-        selector: "#chat-window",
-        text: "Step 1 – Start by describing what you need in plain language. I’ll use this to draft the RFQ."
-      },
-      {
-        selector: "#buyer-items-body",
-        text: "Review and edit the line items Crontal generated from your description. Adjust descriptions, grades, quantities, and sizes."
-      },
-      {
-        selector: "#buyer-destination",
-        text: "Confirm destination, Incoterm, and payment terms so suppliers know how to price freight and payment risk."
-      },
-      {
-        selector: "#share-link-block",
-        text: "Once your RFQ looks right, share this request link with suppliers so they can respond via their portal."
-      },
-      {
-        selector: "#quotes-list",
-        text: "As suppliers respond, their quotes appear here. Use the rank controls to focus on price, delivery, or payment terms."
-      },
-      {
-        selector: "#generate-rfp-btn",
-        text: "When you’re ready to award, generate the award email and export the full RFQ package as a PDF."
-      }
-    ];
-
-    const buyerTourBtn = $("buyer-tour-btn");
-    if (buyerTourBtn) {
-      buyerTourBtn.addEventListener("click", () => {
-        startWalkthrough("buyer", buyerTourSteps);
-      });
-    }
-
-    // Language selector
-    const langSelectBuyer = $("lang-select-buyer");
-    if (langSelectBuyer) {
-      langSelectBuyer.addEventListener("change", (e) => {
-        applyBuyerLanguage(e.target.value);
-      });
-    }
-    applyBuyerLanguage("en");
+        doc.save(`RFQ-${currentRfq.rfq_id}.pdf`);
+    };
   </script>
 </body>
 </html>
